@@ -1,0 +1,9 @@
+*.db
+*.db-journal
+.env
+.env.*
+__pycache__/
+*.pyc
+tests/
+.git/
+.claude/

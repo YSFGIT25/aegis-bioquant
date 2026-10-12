@@ -1,0 +1,10 @@
+*.db
+*.db-journal
+.env
+.env.*
+__pycache__/
+*.pyc
+
+# the one database kept on purpose: a test fixture made by an older version
+!tests/fixtures/*.db
+.claude/

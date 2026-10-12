@@ -1,0 +1,10 @@
+*.db
+*.db-journal
+.env
+.env.*
+__pycache__/
+*.pyc
+.git/
+.railway/
+tests/
+.claude/
