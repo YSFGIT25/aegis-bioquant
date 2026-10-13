@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from jinja2 import DictLoader, Environment, select_autoescape
 
-from aegis_bioquant.telemetry.dashboard_ui import DASHBOARD_SECTIONS, FONT_LINKS, LOGO_SVG, PAGE_STYLE
+from aegis_bioquant.telemetry.dashboard_ui import DASHBOARD_SECTIONS, FAVICON_LINK, FONT_LINKS, LOGO_SVG, PAGE_STYLE
 
 _SITE_STYLE = """
   /* ---- top bar ---- */
@@ -615,7 +615,7 @@ def render(template: str, **context) -> str:
     return _env.get_template(template).render(
         page_style=PAGE_STYLE,
         site_style=_SITE_STYLE,
-        font_links=FONT_LINKS,
+        font_links=FONT_LINKS + FAVICON_LINK,
         logo_svg=LOGO_SVG,
         dashboard_sections=DASHBOARD_SECTIONS,
         **context,

@@ -24,6 +24,8 @@ never innerHTML — so text scraped from filings or sent to the webhook
 cannot inject markup.
 """
 
+from urllib.parse import quote
+
 FONT_LINKS = (
     '<link rel="preconnect" href="https://fonts.googleapis.com">'
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
@@ -31,15 +33,31 @@ FONT_LINKS = (
     'family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap">'
 )
 
-LOGO_SVG = (
-    '<svg class="logo" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">'
-    '<defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">'
+# The mark: a shield holding a rising line drawn as linked atoms. The
+# files in branding/ are the same drawing at full size.
+_LOGO_GRADIENT = (
+    '<defs><linearGradient id="lg" x1="12" y1="6" x2="52" y2="58" gradientUnits="userSpaceOnUse">'
     '<stop offset="0" stop-color="#5b9dff"/><stop offset="1" stop-color="#2fd6b5"/></linearGradient></defs>'
-    '<path d="M16 2.5 27 7v8.2c0 6.6-4.4 11.6-11 14.3C9.4 26.800 5 21.800 5 15.200V7z" fill="url(#lg)" opacity=".16"/>'
-    '<path d="M16 2.5 27 7v8.2c0 6.6-4.4 11.6-11 14.3C9.4 26.800 5 21.800 5 15.200V7z" fill="none" stroke="url(#lg)" stroke-width="1.8" stroke-linejoin="round"/>'
-    '<path d="M10 18.500l3.600-4.200 3 2.600 5.400-6.400" fill="none" stroke="url(#lg)" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/>'
-    "</svg>"
 )
+_LOGO_SHIELD = "M32 5 53 12.5V29.5C53 43.2 44.8 53.2 32 59 19.2 53.2 11 43.2 11 29.5V12.5Z"
+_LOGO_MARK = (
+    f'<path d="{_LOGO_SHIELD}" fill="url(#lg)" fill-opacity=".14"/>'
+    f'<path d="{_LOGO_SHIELD}" fill="none" stroke="url(#lg)" stroke-width="3" stroke-linejoin="round"/>'
+    '<path d="M20.5 40.5 28 31.5 36.5 36 45 23.5M28 31.5 25.5 21.5" fill="none" stroke="url(#lg)" '
+    'stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>'
+    '<g fill="#0c1017" stroke="url(#lg)" stroke-width="2.4"><circle cx="20.5" cy="40.5" r="3.4"/>'
+    '<circle cx="28" cy="31.5" r="3.4"/><circle cx="36.5" cy="36" r="3.4"/><circle cx="25.5" cy="21.5" r="2.6"/></g>'
+    '<circle cx="45" cy="23.5" r="4.2" fill="url(#lg)"/>'
+)
+
+LOGO_SVG = f'<svg class="logo" viewBox="7 3 50 58" width="30" height="35" aria-hidden="true">{_LOGO_GRADIENT}{_LOGO_MARK}</svg>'
+
+# The browser-tab icon: the mark on the page's dark square, carried in the
+# page itself so it needs no extra file or request.
+FAVICON_LINK = '<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,' + quote(
+    f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">{_LOGO_GRADIENT}'
+    f'<rect width="64" height="64" rx="14" fill="#0c1017"/><g transform="translate(3.2 3.2) scale(.9)">{_LOGO_MARK}</g></svg>'
+) + '">'
 
 PAGE_STYLE = """
   :root {

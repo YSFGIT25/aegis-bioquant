@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 290 64" width="1160" height="256" role="img" aria-label="Aegis-BioQuant">
+  <defs><linearGradient id="g" x1="12" y1="6" x2="52" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#5b9dff"/><stop offset="1" stop-color="#2fd6b5"/></linearGradient></defs>
+  <path d="M32 5 53 12.5V29.5C53 43.200 44.800 53.200 32 59 19.200 53.200 11 43.200 11 29.500V12.500Z" fill="url(#g)" fill-opacity=".14"/>
+  <path d="M32 5 53 12.5V29.5C53 43.200 44.800 53.200 32 59 19.200 53.200 11 43.200 11 29.500V12.500Z" fill="none" stroke="url(#g)" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M20.500 40.500 28 31.500 36.500 36 45 23.500M28 31.500 25.500 21.500" fill="none" stroke="url(#g)" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="20.500" cy="40.500" r="3.400" fill="#0c1017" stroke="url(#g)" stroke-width="2.400"/>
+  <circle cx="28" cy="31.500" r="3.400" fill="#0c1017" stroke="url(#g)" stroke-width="2.400"/>
+  <circle cx="36.500" cy="36" r="3.400" fill="#0c1017" stroke="url(#g)" stroke-width="2.400"/>
+  <circle cx="25.500" cy="21.500" r="2.600" fill="#0c1017" stroke="url(#g)" stroke-width="2.200"/>
+  <circle cx="45" cy="23.500" r="4.200" fill="url(#g)"/>
+  <text x="72" y="41" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="27" letter-spacing="-.6"><tspan font-weight="700" fill="#edf1f6">Aegis</tspan><tspan font-weight="500" fill="#8b96a8">-BioQuant</tspan></text>
+</svg>

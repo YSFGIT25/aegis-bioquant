@@ -73,6 +73,7 @@ from aegis_bioquant.telemetry.alerts import AlertPayload
 from aegis_bioquant.telemetry.dashboard_ui import (
     DASHBOARD_SCRIPT,
     DASHBOARD_SECTIONS,
+    FAVICON_LINK,
     FONT_LINKS,
     LOGO_SVG,
     PAGE_STYLE,
@@ -632,6 +633,7 @@ _PAGE = f"""<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aegis-BioQuant</title>
 {FONT_LINKS}
+{FAVICON_LINK}
 <style>{PAGE_STYLE}
   .localbar {{ display: flex; align-items: center; gap: 10px; max-width: 1240px; margin: 0 auto; padding: 16px 20px 0;
                font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }}
