@@ -53,6 +53,7 @@ from typing import Optional
 SCAN_HOUR_UTC = int(os.environ.get("SCAN_HOUR_UTC", "19"))  # see WHY 19:00 UTC above
 CATCH_UP_IF_OLDER_THAN = timedelta(hours=20)
 RETRY_DELAY_SECONDS = 30 * 60
+LOG_LINES_PER_SECOND = 200   # Railway drops lines over 500/sec; see run_scan()
 
 
 def _log(message: str) -> None:
@@ -87,9 +88,30 @@ async def _last_scan_time() -> Optional[datetime]:
 
 
 def run_scan() -> bool:
-    """Runs one scan as a child process. True if it exited cleanly."""
+    """Runs one scan as a child process. True if it exited cleanly.
+
+    The scan prints its whole report at the end, several hundred lines at
+    once. Passed straight through, Railway stores those lines in chunks
+    that share one timestamp and hands them back in no fixed order, and
+    the burst goes over its 500 lines/sec limit, which drops lines. So
+    the report is relayed here one line at a time, at most
+    LOG_LINES_PER_SECOND. (Done here rather than in the pipeline because
+    pipeline.py counts towards the rules fingerprint.)"""
     _log("scan starting")
-    code = subprocess.call([sys.executable, "-m", "aegis_bioquant.pipeline"])
+    child = subprocess.Popen(
+        [sys.executable, "-m", "aegis_bioquant.pipeline"],
+        stdout=subprocess.PIPE,
+        env={**os.environ, "PYTHONUNBUFFERED": "1"},
+    )
+    assert child.stdout is not None
+    sys.stdout.flush()
+    # Relayed as bytes: decoding and re-encoding here could fail on a
+    # character the scheduler's own output encoding lacks.
+    for line in child.stdout:
+        sys.stdout.buffer.write(line)
+        sys.stdout.buffer.flush()
+        time.sleep(1.0 / LOG_LINES_PER_SECOND)
+    code = child.wait()
     _log(f"scan finished, exit code {code}")
     return code == 0
 
