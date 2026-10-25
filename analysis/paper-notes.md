@@ -53,6 +53,19 @@ as not pre-registered, how many scored PDUFA decisions were never
 recorded and why (biologics regulated by CBER are not in Drugs@FDA; a
 partner's application may match neither name).
 
+**The first scored decision came before the change.** IONS (catalyst
+2026-10-26, bepirovirsen, application held by Ionis's partner GSK) was
+approved on 2026-10-20 (Drugs@FDA NDA221276) and announced by Ionis on
+2026-10-21; this was only noticed on 2026-10-25, while the automatic
+method was being built. The plan's change-log entries of 2026-10-24 and
+2026-10-25 that said no decision had resolved carry a dated correction.
+The rule matching on the evidence review's drug name was added after
+seeing this case (otherwise a partner's application never matches).
+Its outcome is APPROVED under either method. Say all of this in the
+paper. Scores from 2026-10-21 on read the approval news (the evidence
+review cites it; p = 0.99); the 24-hour rule already keeps them out,
+since the announcement bound is 2026-10-20 04:00 UTC.
+
 Suggested wording: *"Outcomes were recorded without human judgement: a
 decision counted only when the company's SEC filing and the FDA's own
 public records agreed, under rules fixed before the first decision."*
