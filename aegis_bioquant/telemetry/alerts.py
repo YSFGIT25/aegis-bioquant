@@ -94,6 +94,11 @@ SCHEMA_VERSION = 1
 
 TELEGRAM_MAX_CHARS = 4096   # Bot API sendMessage limit
 DISCORD_MAX_CHARS = 2000    # webhook "content" limit
+# Discord shows a webhook message under the webhook's own name and picture
+# unless the message sets them. Set here, so every Discord alert comes from
+# the product whatever the customer called their webhook. The picture is
+# served by the website (web/app.py, /logo.png).
+DISCORD_SENDER_NAME = "FDAOdds"
 _HTTP_TIMEOUT_SECONDS = 10.0
 
 
@@ -513,6 +518,13 @@ def _telegram_send_url() -> str:
     return f"{settings.TELEGRAM_API_BASE_URL}/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
 
 
+def _discord_body(text: str) -> dict:
+    body = {"content": text, "username": DISCORD_SENDER_NAME}
+    if settings.PUBLIC_BASE_URL:
+        body["avatar_url"] = settings.PUBLIC_BASE_URL.rstrip("/") + "/logo.png"
+    return body
+
+
 async def dispatch_alert(
     payload: AlertPayload,
     destinations: Sequence[Destination] = (),
@@ -562,7 +574,7 @@ async def _dispatch_text(
             ))
         if "discord" in channels:
             sends.append(_post(
-                client, limit, "discord", settings.DISCORD_WEBHOOK_URL, {"content": discord_text},
+                client, limit, "discord", settings.DISCORD_WEBHOOK_URL, _discord_body(discord_text),
             ))
         if "dashboard" in channels:
             sends.append(_post(
@@ -576,7 +588,7 @@ async def _dispatch_text(
                 ))
             elif dest.channel == CHANNEL_DISCORD:
                 sends.append(_post(
-                    client, limit, CHANNEL_DISCORD, dest.address, {"content": discord_text}, dest,
+                    client, limit, CHANNEL_DISCORD, dest.address, _discord_body(discord_text), dest,
                 ))
         return list(await asyncio.gather(*sends))
 

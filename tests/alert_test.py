@@ -72,6 +72,7 @@ async def main():
     tg = by_path[f"/bot{TOKEN}/sendMessage"]
     check("telegram request shape", tg["chat_id"] == "-100200300" and tg["text"].startswith("BUY SETUP: "))
     check("discord request shape", by_path["/discord"]["content"] == tg["text"])
+    check("discord alerts are sent under the product name", by_path["/discord"]["username"] == "FDAOdds")
     back = A.AlertPayload.model_validate(by_path["/dash"])
     check("dashboard JSON round-trips through the schema",
           back.ticker == "CYTK" and back.catalyst.days_until == 40 and back.signal.divergence_delta is not None

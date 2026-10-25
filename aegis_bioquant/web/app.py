@@ -56,6 +56,7 @@ from __future__ import annotations
 
 import asyncio
 import hmac
+import pathlib
 import re
 from datetime import date, timedelta
 from contextlib import asynccontextmanager
@@ -258,6 +259,17 @@ async def healthz() -> str:
 @app.get("/static/dashboard.js")
 async def dashboard_js() -> Response:
     return Response(DASHBOARD_SCRIPT, media_type="text/javascript")
+
+
+# The sender picture on Discord alerts (telemetry/alerts.py), which Discord
+# fetches by URL. A copy of branding/logo-icon-640.png, kept in the package
+# because the hosted image only contains aegis_bioquant/.
+_LOGO_PNG = pathlib.Path(__file__).with_name("logo.png").read_bytes()
+
+
+@app.get("/logo.png")
+async def logo_png() -> Response:
+    return Response(_LOGO_PNG, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/", response_class=HTMLResponse)
