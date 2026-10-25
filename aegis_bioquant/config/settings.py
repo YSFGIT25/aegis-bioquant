@@ -3,9 +3,9 @@ config/settings.py
 -------------------
 API Keys, Database URLs, and runtime thresholds for FDAOdds.
 
-STATUS: PARTIAL — SEC_EDGAR_CONTACT_EMAIL is live (required by
-ingestion/fda_scraper.py's PDUFA adapter). Everything else below is still
-a STUB, to be built out as we reach each module in the incremental build order.
+Every value is read from the environment once, at start-up; each has a
+comment saying which module uses it. Secrets (API keys, bot tokens,
+webhook URLs) are never written in source.
 """
 
 import os
@@ -139,9 +139,17 @@ DASHBOARD_PORT = int(os.environ.get("DASHBOARD_PORT", "8765"))
 # alert goes out — see telemetry/alerts.py's ALERT POLICY.
 ALERT_COOLDOWN_SECONDS = float(os.environ.get("ALERT_COOLDOWN_SECONDS", "86400"))
 
-# TODO: Load the rest from environment / .env via pydantic-settings
-#   - FDA_CALENDAR_API_KEY (not currently needed — AdCom adapter scrapes the
-#     public calendar directly; no key exists for it anyway)
-#   - CLINICALTRIALS_API_BASE_URL
-#   - OPENAI_API_KEY
-#   - MARKET_DATA_API_KEY (yfinance / theta-data)
+# Used by telemetry/status.py: after every scheduled scan the scanner sends
+# a short "scan OK / scan FAILED" report to this one Telegram chat (the
+# operator's own), through TELEGRAM_BOT_TOKEN. Unset = no report.
+STATUS_TELEGRAM_CHAT_ID = os.environ.get("STATUS_TELEGRAM_CHAT_ID")
+
+# Used by core/snapshots.py: once a week the scanner uploads a dated copy of
+# the study's tables to the OSF project, so the record's state on each date
+# is held by a third party. OSF_TOKEN is a personal access token from
+# osf.io/settings/tokens with the osf.full_write scope — a credential, so it
+# comes from the environment only. Unset = no snapshots.
+OSF_TOKEN = os.environ.get("OSF_TOKEN") or None
+OSF_PROJECT_ID = os.environ.get("OSF_PROJECT_ID", "zfg9b")
+OSF_FILES_BASE_URL = os.environ.get("OSF_FILES_BASE_URL", "https://files.osf.io/v1")
+SNAPSHOT_WEEKDAY = int(os.environ.get("SNAPSHOT_WEEKDAY", "6"))   # 0 = Monday ... 6 = Sunday (UTC)

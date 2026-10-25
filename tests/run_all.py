@@ -26,7 +26,8 @@ import tempfile
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 NEEDS_OUTSIDE = {"live_db_test", "dash_test", "pg_db_test"}
-MASKED = ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "ANTHROPIC_API_KEY", "PUBLIC_BASE_URL")
+MASKED = ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "ANTHROPIC_API_KEY", "PUBLIC_BASE_URL",
+          "STATUS_TELEGRAM_CHAT_ID", "OSF_TOKEN")
 
 
 def main() -> int:

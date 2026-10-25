@@ -87,8 +87,8 @@ async def _last_scan_time() -> Optional[datetime]:
     return last
 
 
-def run_scan() -> bool:
-    """Runs one scan as a child process. True if it exited cleanly.
+def run_scan() -> tuple[bool, list[str]]:
+    """Runs one scan as a child process: (exited cleanly?, its report lines).
 
     The scan prints its whole report at the end, several hundred lines at
     once. Passed straight through, Railway stores those lines in chunks
@@ -106,23 +106,61 @@ def run_scan() -> bool:
     assert child.stdout is not None
     sys.stdout.flush()
     # Relayed as bytes: decoding and re-encoding here could fail on a
-    # character the scheduler's own output encoding lacks.
+    # character the scheduler's own output encoding lacks. A decoded copy
+    # is kept for the status report (telemetry/status.py).
+    lines: list[str] = []
     for line in child.stdout:
         sys.stdout.buffer.write(line)
         sys.stdout.buffer.flush()
+        lines.append(line.decode("utf-8", errors="replace"))
         time.sleep(1.0 / LOG_LINES_PER_SECOND)
     code = child.wait()
     _log(f"scan finished, exit code {code}")
-    return code == 0
+    return code == 0, lines
 
 
 def run_scan_with_retry() -> None:
-    if run_scan():
-        return
-    _log(f"scan failed; retrying once in {RETRY_DELAY_SECONDS // 60} minutes")
-    time.sleep(RETRY_DELAY_SECONDS)
-    if not run_scan():
-        _log("retry failed too; waiting for the next scheduled scan")
+    ok, lines = run_scan()
+    retried = False
+    if not ok:
+        _log(f"scan failed; retrying once in {RETRY_DELAY_SECONDS // 60} minutes")
+        time.sleep(RETRY_DELAY_SECONDS)
+        retried = True
+        ok, lines = run_scan()
+        if not ok:
+            _log("retry failed too; waiting for the next scheduled scan")
+    after_scan(ok, retried, lines)
+
+
+def after_scan(ok: bool, retried: bool, lines: list[str], now: Optional[datetime] = None) -> None:
+    """The weekly OSF snapshot (core/snapshots.py) and the operator's
+    status message (telemetry/status.py). Neither may stop the scheduler,
+    so every failure here is logged and swallowed."""
+    from aegis_bioquant.config import settings
+    from aegis_bioquant.telemetry import status
+
+    now = now or datetime.now(timezone.utc)
+    snapshot_note: Optional[str] = None
+    if ok and settings.OSF_TOKEN and now.weekday() == settings.SNAPSHOT_WEEKDAY:
+        from aegis_bioquant.core.snapshots import SnapshotError, upload_snapshot
+
+        try:
+            snap = asyncio.run(upload_snapshot(now))
+            rows = sum(f["rows"] for f in snap.files)
+            snapshot_note = f"uploaded to OSF as {snap.folder} ({rows} rows)"
+        except SnapshotError as exc:
+            snapshot_note = f"FAILED ({exc})"
+        except Exception as exc:  # noqa: BLE001 — see docstring
+            snapshot_note = f"FAILED ({type(exc).__name__})"
+        _log(f"weekly snapshot: {snapshot_note}")
+
+    try:
+        awaiting = asyncio.run(status.awaiting_confirmation())
+    except Exception as exc:  # noqa: BLE001
+        awaiting = [f"(could not read pending outcomes: {type(exc).__name__})"]
+    text = status.format_report(ok, retried, status.summarize(lines), awaiting, snapshot_note)
+    if asyncio.run(status.send(text)):
+        _log("status report sent")
 
 
 def run_scheduler() -> None:
