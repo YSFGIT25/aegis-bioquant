@@ -36,6 +36,15 @@ Suggested wording: *"Scans on US market holidays used the previous
 session's option quotes; N of the predictions used for H3 and H4 fall on
 such days and are marked."*
 
+**Outcomes and announcement times.** From 2026-10-25 the reviewer
+confirms each suggested outcome in Telegram after reading the filing
+(`core/outcome_review.py`); the website's outcomes page does the same
+thing. The announcement time is the filing's SEC acceptance time
+(EDGAR, converted from US Eastern to UTC) unless the reviewer recorded an
+earlier press-release time. Report how many times came from each.
+Before running the analysis: `python analysis/export_announcements.py --osf`
+writes them into `analysis/announcements.csv` from the newest snapshot.
+
 **Software.** The analysis was run with the library versions in
 `analysis/requirements.txt` (Python 3.13.5, numpy 2.3.4). Record the
 versions actually used when the analysis runs.
