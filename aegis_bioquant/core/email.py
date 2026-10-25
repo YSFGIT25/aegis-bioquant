@@ -3,9 +3,9 @@ core/email.py
 --------------
 Sending account emails (address verification, password reset).
 
-STATUS: BUILT, tested against a local stand-in for the email service.
-NOT yet sent through the real service: no API key or sending address is
-configured, so the first real email is still an unverified step.
+STATUS: BUILT and LIVE. Sent through Resend from accounts@fdaodds.com
+(domain verified 2026-10-25; first real password-reset email delivered
+that day). Tests use a local stand-in for the email service.
 
 PROVIDER: Resend's HTTP API (POST /emails with a bearer key). An HTTP
 API rather than SMTP on purpose — hosts commonly block outbound SMTP

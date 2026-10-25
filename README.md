@@ -70,10 +70,10 @@ explicitly, so a deploy can never land in a newly created project.
 A scan that could not reach SEC EDGAR or the FDA calendar is retried once
 after 30 minutes; the reason is listed under `INGEST` in its log.
 
-Email verification and password reset switch on once the `web` service
-has `RESEND_API_KEY` and `EMAIL_FROM` set (`PUBLIC_BASE_URL` already is)
-— see `aegis_bioquant/config/settings.py`. Until then the site runs
-without them.
+Email verification and password reset are on: the `web` service sends
+through Resend (`RESEND_API_KEY`, `EMAIL_FROM`, `PUBLIC_BASE_URL`; see
+`aegis_bioquant/config/settings.py`) from `accounts@fdaodds.com`, whose
+DNS records (DKIM, SPF, DMARC) are at Namecheap.
 
 The `/review` page (confirming which trial a catalyst is about) is only
 for accounts listed in the `web` service's `ADMIN_EMAILS` variable.
