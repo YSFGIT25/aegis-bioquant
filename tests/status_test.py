@@ -12,6 +12,7 @@ from aegis_bioquant.telemetry import status
 from aegis_bioquant import entrypoint
 
 received = []
+refuse = set()      # file names the stand-in OSF answers with 403
 class H(BaseHTTPRequestHandler):
     def _body(self):
         n = int(self.headers.get("Content-Length") or 0)
@@ -22,6 +23,8 @@ class H(BaseHTTPRequestHandler):
     def do_PUT(self):
         body = self._body()
         received.append(("PUT", self.path, body, self.headers.get("Authorization")))
+        if any(f"name={n}" in self.path for n in refuse):
+            self.send_response(403); self.end_headers(); self.wfile.write(b'{"code": 403, "message": "Forbidden"}'); return
         if "kind=folder" in self.path:
             reply = {"data": {"attributes": {"path": "/folder123/"}}}
         else:
@@ -101,6 +104,16 @@ async def main():
           b"IONS" in csv_text and b"CONFIRMED" in csv_text and entry["rows"] == 1
           and entry["sha256_csv"] == hashlib.sha256(csv_text).hexdigest())
     check("snapshot: manifest carries the rules stamp", manifest["rules_version"] == 1 and len(manifest["rules_fingerprint"]) == 12)
+
+    received.clear(); refuse.add("screened_candidates.csv.gz"); snapshots.RETRY_WAIT_SECONDS = 0
+    snap = await snapshots.upload_snapshot(datetime(2026, 10, 25, 19, 2, tzinfo=timezone.utc))
+    tried = [p[1].split("name=")[1] for p in received if p[0] == "PUT" and "kind=file" in p[1]]
+    manifest = json.loads(next(p[2] for p in received if "name=manifest.json" in p[1]))
+    check("snapshot: a refused file is tried twice, the rest still go up, the manifest says which failed",
+          tried.count("screened_candidates.csv.gz") == 2 and "catalyst_events.csv.gz" in tried and tried[-1] == "manifest.json"
+          and snap.failed == ["screened_candidates.csv.gz: OSF returned HTTP 403: Forbidden"]
+          and manifest["failed_uploads"] == snap.failed)
+    refuse.clear()
     await db.dispose_db()
 
 asyncio.run(main())

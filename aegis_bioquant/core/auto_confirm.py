@@ -23,7 +23,8 @@ THE TWO SOURCES
 THE RULES (decide() below; tests/auto_confirm_test.py)
   APPROVED  the filing says approved AND Drugs@FDA lists an approval of
             an original application or an efficacy supplement (a new
-            indication) for the same company or the same drug, with an
+            indication) for the same company or the same drug (named by
+            the catalyst or by its evidence review), with an
             action date within MATCH_DAYS of the filing's decision date.
   CRL       the filing says CRL, Drugs@FDA lists NO approval for that
             company or drug from MATCH_DAYS before the decision date to
@@ -312,6 +313,20 @@ async def _catalyst(session, ticker: str, catalyst_date: date) -> Optional[db.Ca
     )
 
 
+async def _reviewed_drug(session, ticker: str, catalyst_date: date) -> Optional[str]:
+    """The drug named by the catalyst's evidence review. The catalyst's own
+    drug field often holds a trial name or nothing (seen live: IONS
+    2026-10-26 is bepirovirsen, partnered with GSK, so neither the sponsor
+    nor the catalyst field would match Drugs@FDA)."""
+    return await session.scalar(
+        select(db.LLMReviewRecord.drug).where(
+            db.LLMReviewRecord.ticker == ticker,
+            db.LLMReviewRecord.event_type == "PDUFA",
+            db.LLMReviewRecord.catalyst_date == catalyst_date,
+        )
+    )
+
+
 async def run(today: Optional[date] = None, client: Optional[httpx.AsyncClient] = None) -> Result:
     """Checks every SUGGESTED outcome against the FDA's records and
     confirms the ones that agree. Never raises: a failure is returned in
@@ -350,8 +365,9 @@ async def run(today: Optional[date] = None, client: Optional[httpx.AsyncClient] 
         now = datetime.now(timezone.utc)
         for row in rows:
             event = await _catalyst(session, row.ticker, row.catalyst_date)
-            verdict = decide(row.outcome, row.decision_date, event.company_name if event else None,
-                             event.drug_or_trial_candidate if event else None, fda)
+            drug = " ".join(filter(None, (event.drug_or_trial_candidate if event else None,
+                                          await _reviewed_drug(session, row.ticker, row.catalyst_date))))
+            verdict = decide(row.outcome, row.decision_date, event.company_name if event else None, drug or None, fda)
             label = f"{row.ticker} {row.catalyst_date}: {row.outcome}"
             if not verdict.confirmed:
                 result.waiting.append(f"{label} ({verdict.evidence})")

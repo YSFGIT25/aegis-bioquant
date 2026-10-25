@@ -21,8 +21,14 @@ uncompressed CSV, plus the rules version and fingerprint in force, so a
 copy can be checked against the hash after download.
 
 Uploads use OSF's files API (WaterButler) with a personal access token
-(settings.OSF_TOKEN). Errors carry a status code or an exception class
-name only, never the request, so the token cannot reach a log line.
+(settings.OSF_TOKEN). Errors carry a status code, OSF's own short error
+message or an exception class name, never the request, so the token
+cannot reach a log line.
+
+A file OSF refuses is tried once more, then skipped: the rest still go
+up, and the manifest (uploaded last) lists the files that failed. Seen
+2026-10-25: the first snapshot stopped at screened_candidates with HTTP
+403 after six tables had uploaded.
 """
 
 from __future__ import annotations
@@ -31,6 +37,7 @@ import csv
 import gzip
 import hashlib
 import io
+import asyncio
 import json
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
@@ -64,6 +71,7 @@ class SnapshotError(RuntimeError):
 class Snapshot:
     folder: str
     files: list[dict] = field(default_factory=list)   # {name, rows, sha256_csv}
+    failed: list[str] = field(default_factory=list)   # "name: reason", files OSF refused
 
 
 def _cell(value) -> str:
@@ -100,8 +108,29 @@ async def _put(client: httpx.AsyncClient, url: str, content: bytes = b"") -> dic
     except httpx.HTTPError as exc:
         raise SnapshotError(f"upload failed: {type(exc).__name__}") from None
     if resp.status_code not in (200, 201):
-        raise SnapshotError(f"OSF returned HTTP {resp.status_code}")
+        try:
+            detail = str(resp.json().get("message") or "")
+        except ValueError:
+            detail = resp.text
+        detail = " ".join(detail.split())[:120]
+        raise SnapshotError(f"OSF returned HTTP {resp.status_code}" + (f": {detail}" if detail else ""))
     return resp.json()
+
+
+RETRY_WAIT_SECONDS = 10.0
+
+
+async def _put_file(client: httpx.AsyncClient, url: str, content: bytes) -> Optional[str]:
+    """Uploads one file, trying twice. Returns None, or why it failed."""
+    for attempt in (1, 2):
+        try:
+            await _put(client, url, content)
+            return None
+        except SnapshotError as exc:
+            reason = str(exc)
+            if attempt == 1:
+                await asyncio.sleep(RETRY_WAIT_SECONDS)
+    return reason
 
 
 async def upload_snapshot(now: Optional[datetime] = None) -> Snapshot:
@@ -125,12 +154,19 @@ async def upload_snapshot(now: Optional[datetime] = None) -> Snapshot:
                 "each file after gunzip. Customer tables are not included.",
         "files": snap.files,
     }
-    blobs.append(("manifest.json", json.dumps(manifest, indent=2).encode("utf-8")))
 
     root = f"{settings.OSF_FILES_BASE_URL}/resources/{settings.OSF_PROJECT_ID}/providers/osfstorage/"
     async with httpx.AsyncClient(timeout=120.0) as client:
         made = await _put(client, f"{root}?kind=folder&name={quote(snap.folder)}")
         folder_path = made["data"]["attributes"]["path"]          # e.g. "/5f1a.../"
+        base = f"{root.rstrip('/')}{folder_path}"
         for name, content in blobs:
-            await _put(client, f"{root.rstrip('/')}{folder_path}?kind=file&name={quote(name)}", content)
+            reason = await _put_file(client, f"{base}?kind=file&name={quote(name)}", content)
+            if reason:
+                snap.failed.append(f"{name}: {reason}")
+        manifest["failed_uploads"] = snap.failed
+        reason = await _put_file(client, f"{base}?kind=file&name=manifest.json",
+                                 json.dumps(manifest, indent=2).encode("utf-8"))
+        if reason:
+            snap.failed.append(f"manifest.json: {reason}")
     return snap

@@ -167,6 +167,9 @@ def after_scan(ok: bool, retried: bool, lines: list[str], now: Optional[datetime
             snap = asyncio.run(upload_snapshot(now))
             rows = sum(f["rows"] for f in snap.files)
             snapshot_note = f"uploaded to OSF as {snap.folder} ({rows} rows)"
+            if snap.failed:
+                snapshot_note = (f"PARTLY uploaded to OSF as {snap.folder}; {len(snap.failed)} file(s) refused: "
+                                 + "; ".join(snap.failed))
         except SnapshotError as exc:
             snapshot_note = f"FAILED ({exc})"
         except Exception as exc:  # noqa: BLE001 — see docstring

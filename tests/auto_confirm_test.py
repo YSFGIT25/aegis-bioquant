@@ -25,6 +25,9 @@ DRUGSFDA = [
     {"application_number": "NDA299999", "sponsor_name": "PARTNER PHARMA AG",
      "products": [{"brand_name": "BEZUVO", "active_ingredients": [{"name": "BEZUCLASTINIB"}]}],
      "submissions": [sub("ORIG", "TYPE 1", "20261119")]},
+    {"application_number": "NDA221276", "sponsor_name": "GLAXOSMITHKLINE LLC",
+     "products": [{"brand_name": "HIBSAGO", "active_ingredients": [{"name": "BEPIROVIRSEN"}]}],
+     "submissions": [sub("ORIG", "TYPE 1", "20261020")]},
     {"application_number": "ANDA200001", "sponsor_name": "GENERIC CO",
      "products": [{"brand_name": "NADOLOL", "active_ingredients": [{"name": "NADOLOL SODIUM"}]}],
      "submissions": [sub("ORIG", "TYPE 1", "20261102")]},
@@ -61,7 +64,7 @@ recs = A.FdaRecords(A.parse_approvals(DRUGSFDA, date(2026, 10, 1), date(2026, 12
                     A.parse_letters(LETTERS))
 check("only originals and efficacy supplements count as approvals",
       sorted((a.application, a.kind) for a in recs.approvals) ==
-      [("ANDA200001", "ORIG"), ("NDA218614", "EFFICACY"), ("NDA299999", "ORIG")])
+      [("ANDA200001", "ORIG"), ("NDA218614", "EFFICACY"), ("NDA221276", "ORIG"), ("NDA299999", "ORIG")])
 v = A.decide("APPROVED", date(2026, 10, 26), "Ionis Pharmaceuticals, Inc.", "olezarsen", recs)
 check("APPROVED + matching Drugs@FDA approval -> confirmed, FDA date kept", v.confirmed and v.source == A.FDA_APPROVAL
       and v.fda_date == date(2026, 10, 26) and "NDA218614" in v.evidence)
@@ -113,6 +116,15 @@ async def main():
     await event("IONS", date(2026, 10, 26), "Ionis Pharmaceuticals, Inc.", "olezarsen")
     await event("PRAX", date(2026, 11, 3), "Praxis Precision Medicines, Inc.", "EMERALD")
     await event("NOPE", date(2026, 11, 5), "Nope Therapeutics, Inc.", "nopeximab")
+    # The live case: Ionis's partner GSK holds the application, and the
+    # catalyst's own drug field names a trial endpoint, not the drug.
+    await event("IONZ", date(2026, 10, 26), "Ionis Pharmaceuticals, Inc.", "GMFM-88")
+    async with db.get_session_factory()() as s:
+        s.add(db.LLMReviewRecord(ticker="IONZ", event_type="PDUFA", catalyst_date=date(2026, 10, 26),
+                                 reviewed_at=datetime.now(timezone.utc), model="m", status="REVIEWED", drug="Bepirovirsen",
+                                 positives=[], risks=[], sources=[]))
+        await s.commit()
+    await db.record_outcome_check("IONZ", "PDUFA", date(2026, 10, 26), "APPROVED", date(2026, 10, 21), "https://sec/ionz", "GSK approved")
     await db.record_outcome_check("IONS", "PDUFA", date(2026, 10, 26), "APPROVED", date(2026, 10, 27), "https://sec/ions", "approved")
     await db.record_outcome_check("PRAX", "PDUFA", date(2026, 11, 3), "CRL", date(2026, 11, 3), "https://sec/prax", "CRL")
     await db.record_outcome_check("NOPE", "PDUFA", date(2026, 11, 5), "APPROVED", date(2026, 11, 5), "https://sec/nope", "approved")
@@ -124,13 +136,13 @@ async def main():
 
     state["fail"] = True
     res = await A.run(date(2026, 11, 30))
-    check("FDA unreachable: nothing confirmed, said plainly", not res.confirmed and "not reachable" in res.error and len(res.waiting) == 4)
+    check("FDA unreachable: nothing confirmed, said plainly", not res.confirmed and "not reachable" in res.error and len(res.waiting) == 5)
     state["fail"] = False
     res = await A.run(date(2026, 11, 30))
     rows = await db.get_outcome_rows()
     ions, prax = rows[("IONS", "PDUFA", date(2026, 10, 26))], rows[("PRAX", "PDUFA", date(2026, 11, 3))]
     check("run: the approval and the CRL are confirmed, the others wait",
-          len(res.confirmed) == 2 and ions.status == "CONFIRMED" and prax.status == "CONFIRMED"
+          len(res.confirmed) == 3 and ions.status == "CONFIRMED" and prax.status == "CONFIRMED"
           and rows[("NOPE", "PDUFA", date(2026, 11, 5))].status == "SUGGESTED"
           and rows[("DLAY", "PDUFA", date(2026, 11, 6))].status == "SUGGESTED" and len(res.waiting) == 2)
     check("run: confirmed by no person, with the FDA evidence stored",
@@ -138,6 +150,10 @@ async def main():
     check("run: decision date is the FDA's action date; announcement is the earlier bound, source AUTO",
           ions.decision_date == date(2026, 10, 26) and ions.announcement_source == A.AUTO_SOURCE
           and ions.announced_at.replace(tzinfo=timezone.utc) == datetime(2026, 10, 26, 4, 0, tzinfo=timezone.utc))
+    ionz = rows[("IONZ", "PDUFA", date(2026, 10, 26))]
+    check("run: a partner's approval matches on the evidence review's drug name; FDA date and its midnight used",
+          ionz.status == "CONFIRMED" and "NDA221276" in ionz.fda_evidence and ionz.decision_date == date(2026, 10, 20)
+          and ionz.announced_at.replace(tzinfo=timezone.utc) == datetime(2026, 10, 20, 4, 0, tzinfo=timezone.utc))
     check("run: a second run changes nothing", (await A.run(date(2026, 11, 30))).confirmed == [])
     await db.record_outcome_check("IONS", "PDUFA", date(2026, 10, 26), "CRL", date(2026, 10, 26), "https://sec/x", "x")
     check("the finder never overwrites an automatic confirmation",
