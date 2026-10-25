@@ -36,12 +36,26 @@ Suggested wording: *"Scans on US market holidays used the previous
 session's option quotes; N of the predictions used for H3 and H4 fall on
 such days and are marked."*
 
-**Outcomes and announcement times.** From 2026-10-25 the reviewer
-confirms each suggested outcome in Telegram after reading the filing
-(`core/outcome_review.py`); the website's outcomes page does the same
-thing. The announcement time is the filing's SEC acceptance time
-(EDGAR, converted from US Eastern to UTC) unless the reviewer recorded an
-earlier press-release time. Report how many times came from each.
+**Outcomes and announcement times.** Changed on 2026-10-25, before the
+first scored decision (logged in the plan's change log and on OSF): no
+person confirms outcomes. An outcome read from the company's SEC filing
+is recorded only when the FDA's own records agree
+(`core/auto_confirm.py`): for an approval, Drugs@FDA lists a matching
+original application or efficacy supplement approved within 3 days of
+the filing's decision date; for a CRL, Drugs@FDA lists no matching
+approval from 3 days before to 14 days after it, and either the FDA's
+published letter is found or Drugs@FDA's data has been updated at least
+14 days past the decision. Anything else stays unrecorded and is
+excluded. The announcement time is the earlier of the SEC acceptance time
+and midnight US Eastern on the FDA's action date. Report: how many
+decisions were recorded by each rule (`confirmation_source`), and, labelled
+as not pre-registered, how many scored PDUFA decisions were never
+recorded and why (biologics regulated by CBER are not in Drugs@FDA; a
+partner's application may match neither name).
+
+Suggested wording: *"Outcomes were recorded without human judgement: a
+decision counted only when the company's SEC filing and the FDA's own
+public records agreed, under rules fixed before the first decision."*
 Before running the analysis: `python analysis/export_announcements.py --osf`
 writes them into `analysis/announcements.csv` from the newest snapshot.
 

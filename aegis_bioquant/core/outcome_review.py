@@ -4,7 +4,13 @@ core/outcome_review.py
 Confirming FDA outcomes from Telegram, and the announcement time each one
 needs.
 
-THE REVIEWER STILL DECIDES. The pre-registered method is that an outcome
+SWITCHED OFF FOR THE STUDY SINCE 2026-10-25: outcomes are now recorded
+automatically when the SEC filing and the FDA's own records agree
+(core/auto_confirm.py). While settings.OUTCOMES_AUTOMATIC is on, the
+buttons and /announced below refuse, and no buttons are sent. The SEC
+acceptance-time lookup is still used, by auto_confirm.
+
+BEFORE THAT, THE REVIEWER DECIDED. The pre-registered method was that an outcome
 counts only once the reviewer has read the filing and confirmed it. This
 module makes that a tap instead of a website visit: the daily status
 message (telemetry/status.py) shows each outcome the finder has suggested
@@ -188,8 +194,14 @@ async def _reviewer_user_id() -> Optional[int]:
     return None
 
 
+AUTOMATIC_REPLY = ("Outcomes are recorded automatically now, when the SEC filing and the FDA's records agree. "
+                   "Nothing to confirm.")
+
+
 async def handle_button(data: str) -> str:
     """Acts on one button's callback data; returns the reply text."""
+    if settings.OUTCOMES_AUTOMATIC:
+        return AUTOMATIC_REPLY
     try:
         action, row_id, code = data.split(":")
         row_id = int(row_id)
@@ -243,6 +255,8 @@ _ANNOUNCED_RE = re.compile(r"^/announced(?:@\w+)?\s+([A-Za-z.]{1,6})\s+(\d{4}-\d
 async def handle_announced(text: str) -> str:
     """/announced TICKER YYYY-MM-DD HH:MM [link] — the reviewer's own time,
     in UTC, for that ticker's most recent APPROVED/CRL outcome."""
+    if settings.OUTCOMES_AUTOMATIC:
+        return AUTOMATIC_REPLY
     m = _ANNOUNCED_RE.match(text.strip())
     if not m:
         return "Format: /announced TICKER YYYY-MM-DD HH:MM [link], with the time in UTC. Example: /announced IONS 2026-10-26 20:01"

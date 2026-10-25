@@ -1,13 +1,15 @@
 """
 analysis/export_announcements.py
 ---------------------------------
-Writes the reviewer-checked announcement times into analysis/announcements.csv,
+Writes the recorded announcement times into analysis/announcements.csv,
 the file the pre-registered script (run_analysis.py, tagged analysis-v1)
 reads. Added 2026-10-25, before any scored decision resolved; the
 analysis script itself is unchanged.
 
-Where the times come from: the reviewer confirms each outcome and accepts
-(or corrects) its announcement time in Telegram (core/outcome_review.py).
+Where the times come from: from 2026-10-25 each outcome is confirmed
+automatically when the SEC filing and the FDA's records agree, and its
+time set to the earlier of the SEC acceptance time and midnight US
+Eastern on the FDA's action date (core/auto_confirm.py, source AUTO).
 The time is stored on the outcome row and copied into every weekly OSF
 snapshot. This reads a snapshot's catalyst_outcomes table:
 
@@ -17,8 +19,8 @@ snapshot. This reads a snapshot's catalyst_outcomes table:
     python analysis/export_announcements.py path/to/catalyst_outcomes.csv.gz
         a snapshot file already downloaded
 
-Only CONFIRMED APPROVED/CRL outcomes whose time the reviewer accepted
-(announcement_source REVIEWER) are written. Rows already in the CSV are
+Only CONFIRMED APPROVED/CRL outcomes with an accepted time
+(announcement_source AUTO, or REVIEWER) are written. Rows already in the CSV are
 kept as they are; a disagreement with the snapshot is printed, not
 overwritten, so a hand-entered correction is never lost.
 """
@@ -40,6 +42,10 @@ HERE = pathlib.Path(__file__).resolve().parent
 CSV_PATH = HERE / "announcements.csv"
 FIELDS = ["ticker", "catalyst_date", "announced_at_utc", "source_url"]
 OSF_ROOT = "https://api.osf.io/v2/nodes/zfg9b/files/osfstorage/"
+# REVIEWER: accepted by the reviewer (before 2026-10-25). AUTO: set by
+# core/auto_confirm.py, the earlier of the SEC acceptance time and
+# midnight US Eastern on the FDA's action date.
+ACCEPTED_SOURCES = ("REVIEWER", "AUTO")
 
 
 def _get(url: str) -> bytes:
@@ -70,7 +76,7 @@ def reviewer_times(outcomes_csv: bytes) -> dict:
     found = {}
     for row in csv.DictReader(io.StringIO(outcomes_csv.decode("utf-8"))):
         if (row.get("status") == "CONFIRMED" and row.get("outcome") in ("APPROVED", "CRL")
-                and row.get("announcement_source") == "REVIEWER" and row.get("announced_at")):
+                and row.get("announcement_source") in ACCEPTED_SOURCES and row.get("announced_at")):
             moment = datetime.fromisoformat(row["announced_at"].replace("Z", "+00:00"))
             moment = (moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
             found[(row["ticker"], row["catalyst_date"])] = (moment.strftime("%Y-%m-%dT%H:%M:%SZ"),

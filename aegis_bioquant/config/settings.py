@@ -153,3 +153,12 @@ OSF_TOKEN = os.environ.get("OSF_TOKEN") or None
 OSF_PROJECT_ID = os.environ.get("OSF_PROJECT_ID", "zfg9b")
 OSF_FILES_BASE_URL = os.environ.get("OSF_FILES_BASE_URL", "https://files.osf.io/v1")
 SNAPSHOT_WEEKDAY = int(os.environ.get("SNAPSHOT_WEEKDAY", "6"))   # 0 = Monday ... 6 = Sunday (UTC)
+
+# Used by core/auto_confirm.py: FDA outcomes are recorded automatically
+# when the company's SEC filing and the FDA's own records agree (adopted
+# 2026-10-25, before the study's first decision; see the analysis plan's
+# change log). While on, nobody confirms or edits outcomes by hand: the
+# website's and Telegram's confirm controls refuse. "0" brings the manual
+# review back (tests use it; the study does not).
+OUTCOMES_AUTOMATIC = os.environ.get("OUTCOMES_AUTOMATIC", "1") != "0"
+OPENFDA_BASE_URL = os.environ.get("OPENFDA_BASE_URL", "https://api.fda.gov")

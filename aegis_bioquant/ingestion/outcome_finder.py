@@ -18,8 +18,9 @@ ordinary ways:
   - "if approved", "following approval", "prior approval of..." are
     about other things entirely;
   - a filing can mention a past rejection while announcing an approval.
-So the result goes to the website's review page with the sentence it
-was read from and a link to the filing, and an administrator decides.
+So the result is only a suggestion. Since 2026-10-25 it is confirmed
+automatically only when the FDA's own records agree (core/auto_confirm.py);
+before that, an administrator decided on the website's review page.
 Nothing downstream (track record, calibration) reads an unconfirmed
 suggestion. core/database.CatalystOutcomeRecord holds both states.
 

@@ -25,7 +25,8 @@ project's top priority before any engine code was written. Every
 prediction (candidate scored, signal assigned, plan built) gets saved
 with its full input breakdown. Once a catalyst date passes, the outcome
 is recorded in CatalystOutcomeRecord (suggested by
-ingestion/outcome_finder.py, confirmed by an administrator), and the
+ingestion/outcome_finder.py, confirmed when the FDA's own records
+agree, core/auto_confirm.py), and the
 system can check: does a 0.83
 P_Fundamental actually resolve true 83% of the time? That question is
 unanswerable without this table existing first.
@@ -436,7 +437,9 @@ class CatalystOutcomeRecord(Base):
       PENDING    looked for a decision in the company's filings, none found yet
       SUGGESTED  a filing appears to state one (outcome / evidence_* filled in)
                  — a guess by text matching, NOT yet a fact
-      CONFIRMED  an administrator has confirmed the outcome
+      CONFIRMED  the FDA's own records agreed (core/auto_confirm.py), or,
+                 before 2026-10-25 / with OUTCOMES_AUTOMATIC off, an
+                 administrator confirmed it
     Only CONFIRMED rows count anywhere: the track record, calibration,
     and the price-reaction lookup all ignore the other two.
 
@@ -482,6 +485,11 @@ class CatalystOutcomeRecord(Base):
     announced_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     announcement_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     announcement_source: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # How a CONFIRMED row was confirmed (core/auto_confirm.py): FDA_APPROVAL,
+    # FDA_CRL_LETTER or NO_FDA_APPROVAL when automatic, empty when a person
+    # confirmed it. fda_evidence names the FDA record that agreed.
+    confirmation_source: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    fda_evidence: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class TrialOverrideRecord(Base):
@@ -586,6 +594,8 @@ _ADDED_COLUMNS = (
     ("catalyst_outcomes", "announced_at", "TIMESTAMP WITH TIME ZONE"),
     ("catalyst_outcomes", "announcement_url", "VARCHAR"),
     ("catalyst_outcomes", "announcement_source", "VARCHAR"),
+    ("catalyst_outcomes", "confirmation_source", "VARCHAR"),
+    ("catalyst_outcomes", "fda_evidence", "VARCHAR"),
 )
 
 

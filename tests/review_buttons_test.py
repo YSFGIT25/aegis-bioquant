@@ -7,6 +7,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 os.environ["SESSION_COOKIE_SECURE"] = "0"
 from aegis_bioquant.config import settings
+settings.OUTCOMES_AUTOMATIC = False   # this file tests the manual review (tests/auto_confirm_test.py: the automatic one)
 from aegis_bioquant.core import database as db
 from aegis_bioquant.core import outcome_review as R
 from aegis_bioquant.telemetry import status

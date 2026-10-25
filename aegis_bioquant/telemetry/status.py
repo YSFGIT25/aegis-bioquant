@@ -8,9 +8,11 @@ WHY: a scan that fails, an API account that runs out of credit (seen
 live: 24 evidence reviews failed in a row) or a catalyst source that goes
 dark otherwise shows up only as a gap in the record, found weeks later.
 For a study whose evidence is one stored score per day, that gap is the
-costly part. The message also lists FDA decisions the outcome finder has
-suggested and that are waiting for the reviewer to confirm, with the
-reminder to record the announcement time the analysis needs.
+costly part. The message also lists the FDA decisions recorded
+automatically since the last scan (core/auto_confirm.py) and the ones
+still waiting for the FDA's records, for information only: nothing in it
+asks the operator to act on an outcome. (With OUTCOMES_AUTOMATIC off it
+lists suggestions waiting for the reviewer instead, each with buttons.)
 
 Sent with the bot token (settings.TELEGRAM_BOT_TOKEN) to
 settings.STATUS_TELEGRAM_CHAT_ID only, never to customers. Off when either
@@ -62,7 +64,8 @@ def summarize(lines: list[str]) -> dict:
     return found
 
 
-def format_report(ok: bool, retried: bool, summary: dict, awaiting: list[str], snapshot: Optional[str]) -> str:
+def format_report(ok: bool, retried: bool, summary: dict, awaiting: list[str], snapshot: Optional[str],
+                  recorded: Optional[list[str]] = None, automatic: bool = False) -> str:
     head = "FDAOdds scan OK" if ok else "FDAOdds scan FAILED"
     if retried:
         head += " (after one retry)" if ok else " (also on retry; next try at the next scheduled scan)"
@@ -84,7 +87,13 @@ def format_report(ok: bool, retried: bool, summary: dict, awaiting: list[str], s
             lines.append(f"- ...and {len(errors) - _MAX_ERROR_LINES} more in the logs")
     if snapshot:
         lines.append(f"Weekly record snapshot: {snapshot}")
-    if awaiting:
+    if recorded:
+        lines.append("FDA decisions recorded automatically (filing and FDA records agree):")
+        lines += [f"- {r}" for r in recorded]
+    if awaiting and automatic:
+        lines.append("Decisions not recorded yet (checked again after every scan, nothing for you to do):")
+        lines += [f"- {a}" for a in awaiting]
+    elif awaiting:
         lines.append("Waiting for you (each comes as its own message below, with buttons):")
         lines += [f"- {a}" for a in awaiting]
     return "\n".join(lines)
@@ -121,12 +130,23 @@ async def send(text: str, buttons: Optional[list[list[dict]]] = None) -> bool:
         return False
 
 
-async def send_report(ok: bool, retried: bool, lines: list[str], snapshot: Optional[str]) -> bool:
-    """The daily report, then one message with buttons per outcome that
-    needs the reviewer (core/outcome_review.py). SEC acceptance times are
-    looked up first, so each message can show one."""
+async def send_report(ok: bool, retried: bool, lines: list[str], snapshot: Optional[str], outcomes=None) -> bool:
+    """The daily report. `outcomes` is core/auto_confirm.run()'s Result
+    when outcomes are recorded automatically. Otherwise (OUTCOMES_AUTOMATIC
+    off) the report is followed by one message with buttons per outcome
+    that needs the reviewer (core/outcome_review.py); SEC acceptance times
+    are looked up first, so each message can show one."""
     from aegis_bioquant.core import outcome_review
     from aegis_bioquant.core.database import dispose_db
+
+    if settings.OUTCOMES_AUTOMATIC:
+        if outcomes is None:
+            waiting, recorded = ["(the automatic outcome check did not run: see the scanner log)"], []
+        else:
+            waiting, recorded = list(outcomes.waiting), list(outcomes.confirmed)
+            if outcomes.error:
+                waiting.insert(0, outcomes.error)
+        return await send(format_report(ok, retried, summarize(lines), waiting, snapshot, recorded, automatic=True))
 
     pending: list = []
     try:

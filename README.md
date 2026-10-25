@@ -82,8 +82,12 @@ address can no longer be signed up.
 
 Outcome tracking: each scan looks in companies' SEC filings for the FDA's
 decision on catalysts at or near their date and stores what it finds as a
-suggestion. An administrator confirms it at `/review/outcomes`; only
-confirmed outcomes appear in the dashboard's track record.
+suggestion. After the scan, a suggestion is confirmed automatically when
+the FDA's own records agree (Drugs@FDA for approvals; the FDA's published
+complete response letters, or 14 days with no approval listed, for CRLs)
+— see `aegis_bioquant/core/auto_confirm.py`. Nobody confirms outcomes by
+hand (since 2026-10-25; `OUTCOMES_AUTOMATIC`). Only confirmed outcomes
+appear in the dashboard's track record and the study.
 
 To run the customer site locally instead:
 

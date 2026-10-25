@@ -156,6 +156,12 @@ async def main():
         r = await admin.post("/review/outcomes/confirm", data=form)
         check("no CSRF token -> refused", r.headers["location"] == "/login")
         post = lambda **kw: admin.post("/review/outcomes/confirm", data={**form, "csrf_token": tok, **kw})
+        settings.OUTCOMES_AUTOMATIC = True
+        check("while outcomes are automatic, the website refuses to confirm or undo",
+              (await post()).headers["location"].endswith("outcome_automatic")
+              and (await admin.post("/review/outcomes/undo", data={"csrf_token": tok, "ticker": "DUE", "catalyst_date": d(5).isoformat()})).headers["location"].endswith("outcome_automatic")
+              and getattr((await db.get_outcome_rows()).get(("DUE", "PDUFA", d(5))), "status", None) != "CONFIRMED")
+        settings.OUTCOMES_AUTOMATIC = False   # the manual review still works when switched back on
         check("a decision date in the future is refused", (await post(decision_date=d(-1).isoformat())).headers["location"].endswith("outcome_bad"))
         check("a decision date far before the PDUFA date is refused", (await post(decision_date=d(400).isoformat())).headers["location"].endswith("outcome_bad"))
         check("an unknown outcome value is refused", (await post(outcome="MOON")).headers["location"].endswith("outcome_bad"))

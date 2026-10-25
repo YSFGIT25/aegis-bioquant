@@ -133,13 +133,32 @@ def run_scan_with_retry() -> None:
 
 
 def after_scan(ok: bool, retried: bool, lines: list[str], now: Optional[datetime] = None) -> None:
-    """The weekly OSF snapshot (core/snapshots.py) and the operator's
-    status message (telemetry/status.py). Neither may stop the scheduler,
-    so every failure here is logged and swallowed."""
+    """Automatic outcome confirmation (core/auto_confirm.py), the weekly
+    OSF snapshot (core/snapshots.py) and the operator's status message
+    (telemetry/status.py), in that order, so the snapshot and the message
+    include the outcomes just recorded. None of them may stop the
+    scheduler, so every failure here is logged and swallowed."""
     from aegis_bioquant.config import settings
     from aegis_bioquant.telemetry import status
 
     now = now or datetime.now(timezone.utc)
+    outcomes = None
+    if settings.OUTCOMES_AUTOMATIC:
+        from aegis_bioquant.core import auto_confirm
+        from aegis_bioquant.core.database import dispose_db
+
+        async def confirm():
+            try:
+                return await auto_confirm.run(now.date())
+            finally:
+                await dispose_db()
+
+        try:
+            outcomes = asyncio.run(confirm())
+            _log(f"outcomes: {len(outcomes.confirmed)} confirmed automatically, {len(outcomes.waiting)} still open"
+                 + (f"; {outcomes.error}" if outcomes.error else ""))
+        except Exception as exc:  # noqa: BLE001 — see docstring
+            _log(f"automatic outcome check failed: {type(exc).__name__}")
     snapshot_note: Optional[str] = None
     if ok and settings.OSF_TOKEN and now.weekday() == settings.SNAPSHOT_WEEKDAY:
         from aegis_bioquant.core.snapshots import SnapshotError, upload_snapshot
@@ -155,7 +174,7 @@ def after_scan(ok: bool, retried: bool, lines: list[str], now: Optional[datetime
         _log(f"weekly snapshot: {snapshot_note}")
 
     try:
-        if asyncio.run(status.send_report(ok, retried, lines, snapshot_note)):
+        if asyncio.run(status.send_report(ok, retried, lines, snapshot_note, outcomes)):
             _log("status report sent")
     except Exception as exc:  # noqa: BLE001 — see docstring
         _log(f"status report not sent: {type(exc).__name__}")

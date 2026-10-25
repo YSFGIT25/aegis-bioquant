@@ -119,6 +119,7 @@ _OUTCOME_LABELS = {
 
 _NOTICES = {
     "outcome_saved": ("ok", "Outcome recorded."),
+    "outcome_automatic": ("error", "Outcomes are recorded automatically when the SEC filing and the FDA's records agree; they can't be confirmed or changed here."),
     "outcome_undone": ("ok", "Outcome removed. The catalyst is waiting for an outcome again."),
     "outcome_bad": ("error", "Choose an outcome and a decision date that is not in the future."),
     "outcome_no_event": ("error", "That catalyst isn't one that is waiting for an outcome."),
@@ -820,6 +821,8 @@ async def outcome_confirm(
     session, when = await _outcome_post(request, csrf_token, catalyst_date)
     if when is None:
         return session  # the error response
+    if settings.OUTCOMES_AUTOMATIC:
+        return _redirect("/review/outcomes?msg=outcome_automatic")
     # The form's hidden fields are only a pointer: the catalyst must be
     # one the system knows and that is still open.
     if (ticker, when) not in await _outcome_candidates():
@@ -843,6 +846,8 @@ async def outcome_undo(
     session, when = await _outcome_post(request, csrf_token, catalyst_date)
     if when is None:
         return session
+    if settings.OUTCOMES_AUTOMATIC:
+        return _redirect("/review/outcomes?msg=outcome_automatic")
     row = (await get_outcome_rows()).get((ticker, "PDUFA", when))
     if row is None or row.status != "CONFIRMED":
         return _redirect("/review/outcomes?msg=outcome_no_event")
