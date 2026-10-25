@@ -53,7 +53,7 @@ check("report: error lines kept, rules change noticed", len(s["error_lines"]) ==
 text = status.format_report(True, False, s, ["IONS 2026-10-26: APPROVED (https://sec.example/f)"], None)
 check("message: says OK, the counts, the warning and the pending decision",
       text.startswith("FDAOdds scan OK") and "Scored 23" in text and "2 failed" in text and "WARNING" in text
-      and "IONS 2026-10-26: APPROVED" in text and "announcements.csv" in text)
+      and "IONS 2026-10-26: APPROVED" in text and "Waiting for you" in text)
 check("message: failure after retry is said plainly",
       status.format_report(False, True, {}, [], None).startswith("FDAOdds scan FAILED (also on retry"))
 closed = status.summarize(["US MARKET CLOSED: catalyst list refreshed only.\n", "Scored: 0 upcoming catalyst(s)\n"])
@@ -110,13 +110,13 @@ received.clear()
 settings.SNAPSHOT_WEEKDAY = 6
 entrypoint.after_scan(True, False, REPORT, now=datetime(2026, 10, 24, 19, 2, tzinfo=timezone.utc))   # a Saturday
 check("after scan, not the snapshot day: report sent, no upload",
-      [r[0] for r in received] == ["POST"] and "Weekly record snapshot" not in received[0][2]["text"])
+      all(r[0] == "POST" for r in received) and "Weekly record snapshot" not in received[0][2]["text"])
 received.clear()
 entrypoint.after_scan(True, False, REPORT, now=datetime(2026, 10, 25, 19, 2, tzinfo=timezone.utc))   # a Sunday
 check("after scan, snapshot day: upload, then a report that mentions it",
-      received[0][0] == "PUT" and received[-1][0] == "POST" and "uploaded to OSF as record-snapshot-2026-10-25T1902Z" in received[-1][2]["text"])
+      received[0][0] == "PUT" and "uploaded to OSF as record-snapshot-2026-10-25T1902Z" in next(r for r in received if r[0] == "POST")[2]["text"])
 received.clear()
 entrypoint.after_scan(False, True, [], now=datetime(2026, 10, 25, 19, 2, tzinfo=timezone.utc))
 check("a failed scan: no snapshot, and the report says FAILED",
-      [r[0] for r in received] == ["POST"] and received[0][2]["text"].startswith("FDAOdds scan FAILED"))
+      all(r[0] == "POST" for r in received) and received[0][2]["text"].startswith("FDAOdds scan FAILED"))
 srv.shutdown()

@@ -70,6 +70,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Red
 from aegis_bioquant.config import settings
 from aegis_bioquant.core import accounts
 from aegis_bioquant.core import email as mail
+from aegis_bioquant.core import outcome_review
 from aegis_bioquant.core.accounts import (
     CHANNEL_DISCORD,
     CHANNEL_TELEGRAM,
@@ -853,6 +854,31 @@ async def outcome_undo(
 # Telegram webhook
 # --------------------------------------------------------------------------
 
+async def _telegram_call(method: str, payload: dict) -> None:
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(f"{settings.TELEGRAM_API_BASE_URL}/bot{settings.TELEGRAM_BOT_TOKEN}/{method}", json=payload)
+    except Exception:  # noqa: BLE001 — a lost reply is not worth failing the update over
+        pass
+
+
+async def _review_button(query: dict) -> None:
+    sender = (query.get("from") or {}).get("id")
+    message = query.get("message") or {}
+    chat_id = (message.get("chat") or {}).get("id")
+    if not outcome_review.is_operator(sender):
+        await _telegram_call("answerCallbackQuery", {"callback_query_id": query.get("id"), "text": "Not allowed."})
+        return
+    text = await outcome_review.handle_button(str(query.get("data") or ""))
+    await _telegram_call("answerCallbackQuery", {"callback_query_id": query.get("id"), "text": text[:190]})
+    if chat_id is not None:
+        if text.startswith(("Confirmed", "Announcement time recorded", "Already confirmed", "Left unconfirmed")):
+            # Buttons off once acted on, so an old message can't be tapped twice by mistake.
+            await _telegram_call("editMessageReplyMarkup", {"chat_id": chat_id, "message_id": message.get("message_id"),
+                                                            "reply_markup": {"inline_keyboard": []}})
+        await _telegram_call("sendMessage", {"chat_id": chat_id, "text": text})
+
+
 @app.post("/telegram/webhook")
 async def telegram_webhook(request: Request):
     secret = settings.TELEGRAM_WEBHOOK_SECRET
@@ -865,6 +891,19 @@ async def telegram_webhook(request: Request):
     try:
         update = await request.json()
     except Exception:  # noqa: BLE001 — not JSON: nothing to act on
+        return {"ok": True}
+
+    # The reviewer's outcome buttons and /announced command
+    # (core/outcome_review.py). Only the operator's own Telegram account
+    # may use them; anyone else's tap or command is refused or ignored.
+    if isinstance(update, dict) and isinstance(update.get("callback_query"), dict):
+        await _review_button(update["callback_query"])
+        return {"ok": True}
+    message = update.get("message") if isinstance(update, dict) else None
+    if isinstance(message, dict) and str(message.get("text") or "").strip().lower().startswith("/announced"):
+        chat_id = (message.get("chat") or {}).get("id")
+        if outcome_review.is_operator((message.get("from") or {}).get("id")) and outcome_review.is_operator(chat_id):
+            await _telegram_call("sendMessage", {"chat_id": chat_id, "text": await outcome_review.handle_announced(message["text"])})
         return {"ok": True}
 
     reply = await accounts.handle_telegram_update(update)

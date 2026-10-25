@@ -155,12 +155,10 @@ def after_scan(ok: bool, retried: bool, lines: list[str], now: Optional[datetime
         _log(f"weekly snapshot: {snapshot_note}")
 
     try:
-        awaiting = asyncio.run(status.awaiting_confirmation())
-    except Exception as exc:  # noqa: BLE001
-        awaiting = [f"(could not read pending outcomes: {type(exc).__name__})"]
-    text = status.format_report(ok, retried, status.summarize(lines), awaiting, snapshot_note)
-    if asyncio.run(status.send(text)):
-        _log("status report sent")
+        if asyncio.run(status.send_report(ok, retried, lines, snapshot_note)):
+            _log("status report sent")
+    except Exception as exc:  # noqa: BLE001 — see docstring
+        _log(f"status report not sent: {type(exc).__name__}")
 
 
 def run_scheduler() -> None:

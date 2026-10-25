@@ -472,6 +472,17 @@ class CatalystOutcomeRecord(Base):
     price_after: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     price_change_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # e.g. 0.42 = +42%
 
+    # The decision's first public announcement, which the analysis's
+    # 24-hour rule is measured from (core/outcome_review.py).
+    # announcement_source: SEC_ACCEPTANCE = the filing's SEC acceptance
+    # time, looked up automatically and NOT yet checked; REVIEWER = the
+    # reviewer confirmed it as the earliest announcement (or entered an
+    # earlier press-release time). Only REVIEWER times reach the analysis
+    # (analysis/export_announcements.py).
+    announced_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    announcement_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    announcement_source: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
 
 class TrialOverrideRecord(Base):
     """An administrator's decision about which clinical trial a catalyst
@@ -572,6 +583,9 @@ _ADDED_COLUMNS = (
     ("llm_reviews", "date_moved_to", "DATE"),
     ("iv_snapshots", "hv_low", "FLOAT"),
     ("iv_snapshots", "hv_high", "FLOAT"),
+    ("catalyst_outcomes", "announced_at", "TIMESTAMP WITH TIME ZONE"),
+    ("catalyst_outcomes", "announcement_url", "VARCHAR"),
+    ("catalyst_outcomes", "announcement_source", "VARCHAR"),
 )
 
 

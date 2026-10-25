@@ -85,9 +85,8 @@ def format_report(ok: bool, retried: bool, summary: dict, awaiting: list[str], s
     if snapshot:
         lines.append(f"Weekly record snapshot: {snapshot}")
     if awaiting:
-        lines.append("FDA decisions waiting for you to confirm (website, Review > Outcomes):")
+        lines.append("Waiting for you (each comes as its own message below, with buttons):")
         lines += [f"- {a}" for a in awaiting]
-        lines.append("When you confirm one, add its announcement time (UTC) to analysis/announcements.csv.")
     return "\n".join(lines)
 
 
@@ -104,14 +103,44 @@ async def awaiting_confirmation() -> list[str]:
             for r in waiting]
 
 
-async def send(text: str) -> bool:
+async def send(text: str, buttons: Optional[list[list[dict]]] = None) -> bool:
+    """`buttons`: rows of Telegram inline-keyboard buttons
+    ({"text", "callback_data"}), answered by the web app's webhook
+    (core/outcome_review.handle_button)."""
     if not (settings.TELEGRAM_BOT_TOKEN and settings.STATUS_TELEGRAM_CHAT_ID):
         return False
     url = f"{settings.TELEGRAM_API_BASE_URL}/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
+    body = {"chat_id": settings.STATUS_TELEGRAM_CHAT_ID, "text": text[:4000], "disable_web_page_preview": True}
+    if buttons:
+        body["reply_markup"] = {"inline_keyboard": buttons}
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.post(url, json={"chat_id": settings.STATUS_TELEGRAM_CHAT_ID, "text": text[:4000],
-                                                "disable_web_page_preview": True})
+            resp = await client.post(url, json=body)
         return resp.is_success
     except httpx.HTTPError:
         return False
+
+
+async def send_report(ok: bool, retried: bool, lines: list[str], snapshot: Optional[str]) -> bool:
+    """The daily report, then one message with buttons per outcome that
+    needs the reviewer (core/outcome_review.py). SEC acceptance times are
+    looked up first, so each message can show one."""
+    from aegis_bioquant.core import outcome_review
+    from aegis_bioquant.core.database import dispose_db
+
+    pending: list = []
+    try:
+        try:
+            await outcome_review.fill_acceptance_times()
+        except Exception:  # noqa: BLE001 — the messages still go out, without a time
+            pass
+        pending = await outcome_review.pending_reviews()
+        awaiting = [p.text.splitlines()[0] for p in pending]
+    except Exception as exc:  # noqa: BLE001
+        awaiting = [f"(could not read pending outcomes: {type(exc).__name__})"]
+    finally:
+        await dispose_db()
+    sent = await send(format_report(ok, retried, summarize(lines), awaiting, snapshot))
+    for item in pending:
+        await send(item.text, item.buttons)
+    return sent
