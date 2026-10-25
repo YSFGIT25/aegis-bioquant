@@ -92,11 +92,11 @@ async def main():
     # ---- telegram linking ----
     settings.TELEGRAM_BOT_USERNAME = None
     check("no bot username -> clear error", await err(AC.create_telegram_link(u1.id)) == "TELEGRAM_NOT_CONFIGURED")
-    settings.TELEGRAM_BOT_USERNAME = "AegisTestBot"
+    settings.TELEGRAM_BOT_USERNAME = "FDAOddsTestBot"
     link1 = await AC.create_telegram_link(u1.id)
     link2 = await AC.create_telegram_link(u1.id)
     tok1, tok2 = link1.split("start=")[1], link2.split("start=")[1]
-    check("link format", link2.startswith("https://t.me/AegisTestBot?start=") and len(tok2) == 32 and tok1 != tok2)
+    check("link format", link2.startswith("https://t.me/FDAOddsTestBot?start=") and len(tok2) == 32 and tok1 != tok2)
     upd = lambda text, chat=555001: {"update_id": 1, "message": {"chat": {"id": chat, "type": "private"}, "text": text}}
     r = await AC.handle_telegram_update(upd(f"/start {tok1}"))
     check("older code invalidated by a newer one", "expired" in r.text and await count(db.AlertDestinationRecord, db.AlertDestinationRecord.channel == "telegram", db.AlertDestinationRecord.user_id == u1.id) == 0)
@@ -114,11 +114,11 @@ async def main():
     check("/start with no code -> instructions", "Connect Telegram" in (await AC.handle_telegram_update(upd("/start"))).text)
     for junk in (upd("hello"), {}, {"message": None}, {"message": {"chat": {}, "text": "/start x"}}, {"edited_message": {}}, "nonsense", None):
         check(f"ignores {str(junk)[:40]}", await AC.handle_telegram_update(junk) is None)
-    r = await AC.handle_telegram_update(upd("/stop@AegisTestBot"))
+    r = await AC.handle_telegram_update(upd("/stop@FDAOddsTestBot"))
     check("/stop unlinks the chat", "off" in r.text and not [d for d in await AC.get_destinations(u1.id) if d.channel == "telegram"])
     check("/stop on an unlinked chat", "isn't connected" in (await AC.handle_telegram_update(upd("/stop"))).text)
     tok4 = (await AC.create_telegram_link(u1.id)).split("start=")[1]
-    await AC.handle_telegram_update(upd(f"/start@AegisTestBot {tok4}"))
+    await AC.handle_telegram_update(upd(f"/start@FDAOddsTestBot {tok4}"))
     check("relink works (group-style /start@Bot)", [d.address for d in await AC.get_destinations(u1.id) if d.channel == "telegram"] == ["555001"])
 
     # ---- fan-out ----   u1: telegram + discord(ok)   u2: discord(fails)   u3: nothing

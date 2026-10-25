@@ -32,7 +32,7 @@ def csrf(html):
     return re.search(r'name="csrf_token" value="([^"]+)"', html).group(1)
 
 def link_in(body, path):
-    m = re.search(r"https://aegis\.example" + path + r"\?token=([A-Za-z0-9_%-]+)", body["text"])
+    m = re.search(r"https://fdaodds\.example" + path + r"\?token=([A-Za-z0-9_%-]+)", body["text"])
     return m.group(1) if m else None
 
 HOOK = "https://discord.com/api/webhooks/123456789012345678/abc"
@@ -60,8 +60,8 @@ async def main():
         check("email off: reset request sends nothing", r.status_code == 200 and not sent)
 
     # ---------------- email configured ----------------
-    settings.RESEND_API_KEY, settings.EMAIL_FROM = "re_SECRETKEY", "Aegis <accounts@aegis.example>"
-    settings.PUBLIC_BASE_URL, settings.EMAIL_API_BASE_URL = "https://aegis.example", f"http://127.0.0.1:{srv.server_port}"
+    settings.RESEND_API_KEY, settings.EMAIL_FROM = "re_SECRETKEY", "FDAOdds <accounts@fdaodds.example>"
+    settings.PUBLIC_BASE_URL, settings.EMAIL_API_BASE_URL = "https://fdaodds.example", f"http://127.0.0.1:{srv.server_port}"
 
     async with client() as a, client() as a2, client() as anon:
         r = await a.post("/signup", data={"email": "alice@test.invalid", "password": PW})
@@ -69,8 +69,8 @@ async def main():
         auth, body = sent[-1]
         tok = link_in(body, "/verify")
         check("email goes to the new address, from the configured sender, with the API key as a bearer token",
-              body["to"] == ["alice@test.invalid"] and body["from"] == "Aegis <accounts@aegis.example>" and auth == "Bearer re_SECRETKEY" and "Confirm" in body["subject"])
-        check("the link points at the configured site address and appears in both text and HTML", tok and f"https://aegis.example/verify?token={tok}" in body["html"])
+              body["to"] == ["alice@test.invalid"] and body["from"] == "FDAOdds <accounts@fdaodds.example>" and auth == "Bearer re_SECRETKEY" and "Confirm" in body["subject"])
+        check("the link points at the configured site address and appears in both text and HTML", tok and f"https://fdaodds.example/verify?token={tok}" in body["html"])
         async with db.get_session_factory()() as s:
             stored = list(await s.scalars(select(db.EmailTokenRecord.token_hash)))
         check("the token is stored only as a hash", tok not in stored and len(stored[0]) == 64)
@@ -82,7 +82,7 @@ async def main():
         check("unverified: dashboard still viewable", (await a.get("/dashboard")).status_code == 200)
         r = await a.post("/settings/discord", data={"webhook_url": HOOK, "csrf_token": tok_a})
         check("unverified: saving a webhook refused", r.headers["location"] == "/settings?msg=verify_first" and not await AC.get_destinations(await uid("alice@test.invalid")))
-        settings.TELEGRAM_BOT_USERNAME = "AegisTestBot"
+        settings.TELEGRAM_BOT_USERNAME = "FDAOddsTestBot"
         r = await a.post("/settings/telegram/connect", data={"csrf_token": tok_a})
         check("unverified: Telegram connect refused", r.headers["location"] == "/settings?msg=verify_first")
 

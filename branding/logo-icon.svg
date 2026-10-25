@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512" role="img" aria-label="Aegis-BioQuant">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512" role="img" aria-label="FDAOdds">
   <defs><linearGradient id="g" x1="12" y1="6" x2="52" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#5b9dff"/><stop offset="1" stop-color="#2fd6b5"/></linearGradient></defs>
   <rect width="64" height="64" rx="14" fill="#0c1017"/>
   <g transform="translate(6.400 6.400) scale(.8)"><path d="M32 5 53 12.5V29.5C53 43.200 44.800 53.200 32 59 19.200 53.200 11 43.200 11 29.500V12.500Z" fill="url(#g)" fill-opacity=".14"/>

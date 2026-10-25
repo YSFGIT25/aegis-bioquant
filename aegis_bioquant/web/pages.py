@@ -147,14 +147,14 @@ _BASE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}Aegis-BioQuant · FDA catalyst intelligence{% endblock %}</title>
+<title>{% block title %}FDAOdds · FDA catalyst intelligence{% endblock %}</title>
 {{ font_links|safe }}
 <style>{{ page_style|safe }}{{ site_style|safe }}</style>
 </head>
 <body>
 <div class="topline">
   <nav class="nav">
-    <a class="brand" href="/">{{ logo_svg|safe }}<span>Aegis<em>-BioQuant</em></span></a>
+    <a class="brand" href="/">{{ logo_svg|safe }}<span>FDA<em>Odds</em></span></a>
     {% if session %}
       <a href="/dashboard"{% if here == "dashboard" %} class="here"{% endif %}>Dashboard</a>
       <a href="/settings"{% if here == "settings" %} class="here"{% endif %}>Alert settings</a>
@@ -182,9 +182,9 @@ _BASE = """<!doctype html>
 {% block content %}{% endblock %}
 </main>
 <footer>
-  Aegis-BioQuant publishes automated, model-generated signals for information only. It is not investment
+  FDAOdds publishes automated, model-generated signals for information only. It is not investment
   advice, and nothing here is a recommendation to buy or sell any security. Trading options and biotech
-  stocks around regulatory events can lose your entire position.
+  stocks around regulatory events can lose your entire position. FDAOdds is independent and is not affiliated with, or endorsed by, the U.S. Food and Drug Administration.
 </footer>
 {% block scripts %}{% endblock %}
 </body>
@@ -197,7 +197,7 @@ _LANDING = """{% extends "base" %}
   <div>
     <span class="eyebrow">Early access</span>
     <h1>Know which FDA decisions matter, <span>before the market does.</span></h1>
-    <p class="lead">Aegis-BioQuant tracks upcoming FDA decisions at small and mid-sized drug makers, scores each drug's
+    <p class="lead">FDAOdds tracks upcoming FDA decisions at small and mid-sized drug makers, scores each drug's
        trial evidence, and reads what the options market expects. When strong evidence meets options that are still
        cheap, you get an alert on Telegram or Discord.</p>
     <div class="actions">
@@ -279,7 +279,7 @@ _LANDING = """{% extends "base" %}
 """
 
 _AUTH = """{% extends "base" %}
-{% block title %}{{ heading }} · Aegis-BioQuant{% endblock %}
+{% block title %}{{ heading }} · FDAOdds{% endblock %}
 {% block content %}
 <div class="narrow">
  <div class="authcard">
@@ -308,7 +308,7 @@ _AUTH = """{% extends "base" %}
 """
 
 _FORGOT = """{% extends "base" %}
-{% block title %}Reset password · Aegis-BioQuant{% endblock %}
+{% block title %}Reset password · FDAOdds{% endblock %}
 {% block content %}
 <div class="narrow">
   <h1>Reset your password</h1>
@@ -326,7 +326,7 @@ _FORGOT = """{% extends "base" %}
 """
 
 _RESET = """{% extends "base" %}
-{% block title %}Choose a new password · Aegis-BioQuant{% endblock %}
+{% block title %}Choose a new password · FDAOdds{% endblock %}
 {% block content %}
 <div class="narrow">
   <h1>Choose a new password</h1>
@@ -344,7 +344,7 @@ _RESET = """{% extends "base" %}
 """
 
 _MESSAGE = """{% extends "base" %}
-{% block title %}{{ heading }} · Aegis-BioQuant{% endblock %}
+{% block title %}{{ heading }} · FDAOdds{% endblock %}
 {% block content %}
 <div class="narrow">
   <h1>{{ heading }}</h1>
@@ -355,7 +355,7 @@ _MESSAGE = """{% extends "base" %}
 """
 
 _DASHBOARD = """{% extends "base" %}
-{% block title %}Dashboard · Aegis-BioQuant{% endblock %}
+{% block title %}Dashboard · FDAOdds{% endblock %}
 {% block content %}
 {% if not has_destination %}
   <div class="notice">You have not connected Telegram or Discord yet, so alerts will only appear on this page.
@@ -367,7 +367,7 @@ _DASHBOARD = """{% extends "base" %}
 """
 
 _SETTINGS = """{% extends "base" %}
-{% block title %}Alert settings · Aegis-BioQuant{% endblock %}
+{% block title %}Alert settings · FDAOdds{% endblock %}
 {% block content %}
 <div class="pagehead"><h1>Alert settings</h1><span class="muted">{{ session.email }}</span></div>
 {% if notice %}<div class="notice {{ notice.kind }}" role="status">{{ notice.text }}</div>{% endif %}
@@ -441,7 +441,7 @@ _SETTINGS = """{% extends "base" %}
 """
 
 _REVIEW = """{% extends "base" %}
-{% block title %}Review · Aegis-BioQuant{% endblock %}
+{% block title %}Review · FDAOdds{% endblock %}
 {% block content %}
 <div class="pagehead"><h1>Review</h1>
   <span class="muted">Confirm which clinical trial each catalyst is about. Confirmed catalysts are scored at the next scan.</span></div>
@@ -511,7 +511,7 @@ _REVIEW = """{% extends "base" %}
 """
 
 _OUTCOMES = """{% extends "base" %}
-{% block title %}Outcomes · Aegis-BioQuant{% endblock %}
+{% block title %}Outcomes · FDAOdds{% endblock %}
 {% block content %}
 <div class="pagehead"><h1>Review</h1>
   <span class="muted">Record what the FDA decided. Only outcomes confirmed here count in the track record.</span></div>

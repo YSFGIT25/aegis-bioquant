@@ -285,7 +285,7 @@ def _build_user_agent() -> str:
             "SEC requires a real contact email in the User-Agent for "
             "automated EDGAR access. Set it before calling fetch_pdufa_catalysts()."
         )
-    return f"Aegis-BioQuant/1.0 ({contact})"
+    return f"FDAOdds/1.0 ({contact})"
 
 
 _RETRYABLE_STATUS = (429, 500, 502, 503, 504)

@@ -53,7 +53,7 @@ import httpx
 from pydantic import BaseModel, Field
 
 CTGOV_API_BASE = "https://clinicaltrials.gov/api/v2"
-_USER_AGENT = "Aegis-BioQuant/1.0 (clinicaltrials.gov API v2 client)"
+_USER_AGENT = "FDAOdds/1.0 (clinicaltrials.gov API v2 client)"
 
 
 # --------------------------------------------------------------------------

@@ -1,4 +1,9 @@
-# Aegis-BioQuant
+# FDAOdds
+
+Formerly Aegis-BioQuant. The code folder (`aegis_bioquant`), this
+repository and the Railway project keep the original name on purpose:
+the pre-registered study (https://osf.io/e6rcu) cites them, and renaming
+the package would change the rules fingerprint (`config/rules.py`).
 
 Automated multi-strategy trading system for biotech catalyst volatility
 (PDUFA / AdCom / Phase 3 readouts).

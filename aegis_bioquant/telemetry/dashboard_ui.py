@@ -352,7 +352,7 @@ DASHBOARD_SECTIONS = """
       <div class="fact"><h3>Entry window</h3><p>The 35 to 45 days before an FDA decision. It is the only period in which an alert can go out: early enough to act before attention builds.</p></div>
       <div class="fact"><h3>Verdicts</h3><p>“Setting up” means all three checks pass but the entry window has not opened. “Buy setup” means they pass inside the window, and alerts go out. “Strong evidence, stock only” means a score of 90 or more with options that are expensive or barely traded: a case for the shares, with its own alert inside the window. “Close” means two of three. “Avoid” is the reverse of a setup: weak evidence, a big expected move and expensive options.</p></div>
     </div>
-    <p class="fineprint">Aegis-BioQuant publishes automated, model-generated information. It is not investment advice. The evidence score has no long track record yet; see the Track record tab for what has been measured so far.</p>
+    <p class="fineprint">FDAOdds publishes automated, model-generated information. It is not investment advice. FDAOdds is independent and is not affiliated with, or endorsed by, the U.S. Food and Drug Administration. The evidence score has no long track record yet; see the Track record tab for what has been measured so far.</p>
   </section>
 """
 

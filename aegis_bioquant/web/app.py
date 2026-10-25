@@ -145,7 +145,7 @@ async def _lifespan(app: FastAPI):
     await dispose_db()
 
 
-app = FastAPI(title="Aegis-BioQuant", lifespan=_lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="FDAOdds", lifespan=_lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.middleware("http")

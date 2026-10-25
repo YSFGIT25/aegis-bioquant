@@ -97,10 +97,10 @@ async def main():
         check("Telegram connect without a bot configured -> friendly notice", r.headers["location"] == "/settings?msg=telegram_unavailable")
         r = await anon.post("/telegram/webhook", json={})
         check("Telegram webhook does not exist until configured", r.status_code == 404)
-        settings.TELEGRAM_BOT_USERNAME, settings.TELEGRAM_BOT_TOKEN, settings.TELEGRAM_WEBHOOK_SECRET = "AegisTestBot", "1:BOT", "hook-secret"
+        settings.TELEGRAM_BOT_USERNAME, settings.TELEGRAM_BOT_TOKEN, settings.TELEGRAM_WEBHOOK_SECRET = "FDAOddsTestBot", "1:BOT", "hook-secret"
         r = await a.post("/settings/telegram/connect", data={"csrf_token": tok_a})
         link = r.headers["location"]
-        check("Telegram connect -> redirect to the bot with a one-time code", r.status_code == 303 and link.startswith("https://t.me/AegisTestBot?start="))
+        check("Telegram connect -> redirect to the bot with a one-time code", r.status_code == 303 and link.startswith("https://t.me/FDAOddsTestBot?start="))
         code = link.split("start=")[1]
         update = {"update_id": 1, "message": {"chat": {"id": 424242, "type": "private"}, "text": f"/start {code}"}}
         r = await anon.post("/telegram/webhook", json=update)

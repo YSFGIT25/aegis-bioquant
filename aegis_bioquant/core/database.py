@@ -1,7 +1,7 @@
 """
 core/database.py
 -----------------
-Async database engine + ORM models for Aegis-BioQuant.
+Async database engine + ORM models for FDAOdds.
 
 TWO DATABASES, ONE CODE PATH: settings.DATABASE_URL defaults to a local
 SQLite file (zero setup, used for local runs and tests). The hosted

@@ -83,11 +83,11 @@ def _html(paragraphs: list[str], link: str, link_text: str, footer: str) -> str:
 
 async def send_verification_email(to: str, token: str) -> bool:
     link = _link("/verify", token)
-    intro = "Confirm this email address to finish setting up your Aegis-BioQuant account."
+    intro = "Confirm this email address to finish setting up your FDAOdds account."
     footer = "This link works for 24 hours. If you didn't create an account, you can ignore this email."
     return await send_email(
         to,
-        "Confirm your email for Aegis-BioQuant",
+        "Confirm your email for FDAOdds",
         f"{intro}\n\n{link}\n\n{footer}\n",
         _html([intro], link, "Confirm email address", footer),
     )
@@ -95,14 +95,14 @@ async def send_verification_email(to: str, token: str) -> bool:
 
 async def send_password_reset_email(to: str, token: str) -> bool:
     link = _link("/reset", token)
-    intro = "Someone asked to reset the password for your Aegis-BioQuant account. Use this link to choose a new one."
+    intro = "Someone asked to reset the password for your FDAOdds account. Use this link to choose a new one."
     footer = (
         "This link works for 1 hour and only once. If you didn't ask for it, you can ignore "
         "this email; your password has not been changed."
     )
     return await send_email(
         to,
-        "Reset your Aegis-BioQuant password",
+        "Reset your FDAOdds password",
         f"{intro}\n\n{link}\n\n{footer}\n",
         _html([intro], link, "Choose a new password", footer),
     )

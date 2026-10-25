@@ -47,7 +47,7 @@ async def main():
         s2 = (await c.get(BASE + "/api/state")).json()
         check("rejected body not stored", len(s2["alerts"]) == 3)
         page = await c.get(BASE + "/")
-        check("page served", page.status_code == 200 and "Aegis-BioQuant" in page.text)
+        check("page served", page.status_code == 200 and "FDAOdds" in page.text)
     await dispose_db()
 
 asyncio.run(main())

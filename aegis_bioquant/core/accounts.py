@@ -428,7 +428,7 @@ async def handle_telegram_update(update: dict) -> Optional[TelegramReply]:
         "That link has expired or was already used. Open Alert settings on the website and press Connect Telegram again.",
     )
     if len(parts) < 2:
-        return TelegramReply(chat_id, "To get alerts here, sign in on the Aegis-BioQuant website, open Alert settings and press Connect Telegram.")
+        return TelegramReply(chat_id, "To get alerts here, sign in on the FDAOdds website, open Alert settings and press Connect Telegram.")
 
     factory = get_session_factory()
     async with factory() as session:
@@ -448,7 +448,7 @@ async def handle_telegram_update(update: dict) -> Optional[TelegramReply]:
         return not_linked
 
     await _set_destination(user_id, CHANNEL_TELEGRAM, chat_id)
-    return TelegramReply(chat_id, "Connected. Aegis-BioQuant alerts will arrive in this chat. Send /stop to turn them off.")
+    return TelegramReply(chat_id, "Connected. FDAOdds alerts will arrive in this chat. Send /stop to turn them off.")
 
 
 # --------------------------------------------------------------------------

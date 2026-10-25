@@ -1,7 +1,7 @@
 """
 config/settings.py
 -------------------
-API Keys, Database URLs, and runtime thresholds for Aegis-BioQuant.
+API Keys, Database URLs, and runtime thresholds for FDAOdds.
 
 STATUS: PARTIAL — SEC_EDGAR_CONTACT_EMAIL is live (required by
 ingestion/fda_scraper.py's PDUFA adapter). Everything else below is still
@@ -117,7 +117,7 @@ TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET")
 # three must be set for the site to send email; with any missing, those
 # features stay off and the site works as it did without them.
 #   RESEND_API_KEY   credential for the email service (resend.com)
-#   EMAIL_FROM       the sender, e.g. "Aegis-BioQuant <accounts@yourdomain.com>".
+#   EMAIL_FROM       the sender, e.g. "FDAOdds <accounts@fdaodds.com>".
 #                    The service only sends from a domain you have verified with it.
 #   PUBLIC_BASE_URL  the site's own address, e.g. "https://yourdomain.com" —
 #                    what emailed links point at (see core/email.py for why

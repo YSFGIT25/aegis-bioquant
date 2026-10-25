@@ -87,7 +87,7 @@ async def _lifespan(app: FastAPI):
     await dispose_db()
 
 
-app = FastAPI(title="Aegis-BioQuant Dashboard", lifespan=_lifespan, docs_url=None, redoc_url=None)
+app = FastAPI(title="FDAOdds Dashboard", lifespan=_lifespan, docs_url=None, redoc_url=None)
 
 
 def _utc_iso(dt: Optional[datetime]) -> Optional[str]:
@@ -631,7 +631,7 @@ _PAGE = f"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aegis-BioQuant</title>
+<title>FDAOdds</title>
 {FONT_LINKS}
 {FAVICON_LINK}
 <style>{PAGE_STYLE}
@@ -640,7 +640,7 @@ _PAGE = f"""<!doctype html>
 </style>
 </head>
 <body>
-<div class="localbar">{LOGO_SVG}<span>Aegis-BioQuant</span></div>
+<div class="localbar">{LOGO_SVG}<span>FDAOdds</span></div>
 <main>
 {DASHBOARD_SECTIONS}
 </main>
