@@ -52,7 +52,7 @@ Railway project `aegis-bioquant`, three services:
 | :--- | :--- |
 | `Postgres` | The database. No public address; only the other two services can reach it. |
 | `scanner` | Runs the scan once a day at 19:00 UTC (late in the US market session, when option quotes are live and most of the day's volume is in) and keeps its own schedule. |
-| `web` | The customer site: https://web-production-70aa9.up.railway.app |
+| `web` | The customer site: https://fdaodds.com (also https://web-production-70aa9.up.railway.app) |
 
 `scanner` and `web` are built from the same `Dockerfile`. The
 `AEGIS_ROLE` variable set on each service (`scanner` or `web`) decides
