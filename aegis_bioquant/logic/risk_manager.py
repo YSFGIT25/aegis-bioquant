@@ -145,7 +145,7 @@ def _deactivated_time_based_exit_triggers() -> List[ExitTrigger]:
 def _scale_equity_allocation_pct(p_fundamental: float) -> float:
     """
     Linearly scales the flat 2-5% equity allocation band by conviction
-    strength above the 0.85 equity-accumulation floor. A 0.85 score gets
+    strength above the 0.90 equity-accumulation floor. A 0.90 score gets
     the 2% floor; a 1.00 score gets the full 5% ceiling.
     """
     floor_p = c.EQUITY_ACCUMULATION_P_FUNDAMENTAL_MIN

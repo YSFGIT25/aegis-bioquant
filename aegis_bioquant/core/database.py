@@ -23,9 +23,10 @@ database for this system isn't caching API responses — it's building
 the historical record needed for CALIBRATION TRACKING, flagged as the
 project's top priority before any engine code was written. Every
 prediction (candidate scored, signal assigned, plan built) gets saved
-with its full input breakdown. Once a catalyst date passes, a future
-piece (not built yet — an outcome-recording step) can fill in what
-actually happened and this system can finally check: does a 0.83
+with its full input breakdown. Once a catalyst date passes, the outcome
+is recorded in CatalystOutcomeRecord (suggested by
+ingestion/outcome_finder.py, confirmed by an administrator), and the
+system can check: does a 0.83
 P_Fundamental actually resolve true 83% of the time? That question is
 unanswerable without this table existing first.
 """
@@ -100,9 +101,9 @@ class CatalystEventRecord(Base):
 class PredictionRecord(Base):
     """
     One row per full pipeline run on a candidate (pipeline.PipelineResult).
-    Outcome columns are nullable and unpopulated until a future
-    outcome-recording step fills them in — the schema is ready for that
-    now so it doesn't need a migration later.
+    Outcomes are recorded once per catalyst in CatalystOutcomeRecord; the
+    three outcome columns at the end of this table are never written (see
+    the SUPERSEDED note there).
     """
 
     __tablename__ = "predictions"
@@ -357,8 +358,9 @@ class ExitNoticeRecord(Base):
 class LLMReviewRecord(Base):
     """Claude's reading of the company's own filings about one catalyst's
     drug (engines/clinical_nlp/llm_review.py): one row per catalyst,
-    replaced when it is re-read. Shown beside the point-system score; no
-    signal rule reads it."""
+    replaced when it is re-read. Since 2026-10-09 its score is the
+    evidence score the signal rules act on (pipeline.run_candidate_pipeline);
+    the point-system score is kept beside it for comparison."""
 
     __tablename__ = "llm_reviews"
     __table_args__ = (UniqueConstraint("ticker", "event_type", "catalyst_date"),)

@@ -5,11 +5,14 @@ repository and the Railway project keep the original name on purpose:
 the pre-registered study (https://osf.io/e6rcu) cites them, and renaming
 the package would change the rules fingerprint (`config/rules.py`).
 
-Automated multi-strategy trading system for biotech catalyst volatility
-(PDUFA / AdCom / Phase 3 readouts).
+Scans upcoming FDA decisions (PDUFA dates, advisory committees; Phase 3
+readouts as a watch list), scores each drug's evidence, reads what the
+options market expects, and alerts on setups. No trades are placed: the
+positions it prints are paper positions.
 
 Dual-engine architecture:
-- **Engine 1 — Clinical NLP**: scispacy + LLM structured scoring -> `P_Fundamental`
+- **Engine 1 — Evidence score**: an AI model's reading of the company's filings and published results
+  (`engines/clinical_nlp/llm_review.py`), with a registry point system as the fallback (`classifier.py`) -> `P_Fundamental`
 - **Engine 2 — Options Quant**: IV Rank + the move the options price for the event
 
 The two engines feed the **Arbitrage Matrix** (`logic/matrix_matcher.py`), which
@@ -19,7 +22,7 @@ routes each candidate to one of three tracks:
 | :--- | :--- | :--- |
 | `LONG_RUN_UP_ALPHA` | P_Fundamental ≥ 0.75, options price an extra move ≥ 10% for the event, IV Rank < 30 | Short-dated options run-up, Kelly-sized, T-14/T-5 exits |
 | `STRUCTURAL_COLLAPSE_AVOID` | P_Fundamental ≤ 0.40, extra move ≥ 10%, IV Rank > 50 | Short/avoid existing premium exposure |
-| `LONG_TERM_EQUITY_ACCUMULATION` | P_Fundamental ≥ 0.85, but IV Rank > 50 or OI < 2000 (options overpriced/illiquid) | Bypass options, flat 2–5% equity allocation, 15% trailing stop, no time-based exit |
+| `LONG_TERM_EQUITY_ACCUMULATION` | P_Fundamental ≥ 0.90 (review not thin), but IV Rank > 50 or OI < 2000 (options overpriced/illiquid) | Bypass options, flat 2–5% equity allocation, 15% trailing stop, no time-based exit |
 
 ## Running it
 

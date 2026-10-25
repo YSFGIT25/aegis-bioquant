@@ -10,7 +10,7 @@ market inefficiencies and assign a candidate.arbitrage_signal.
 Signal routing (checked in priority order):
 
 1. LONG_TERM_EQUITY_ACCUMULATION (pivot track)
-   P_Fundamental >= 0.85 AND (IV_Rank > 50 OR Open_Interest < 2000)
+   P_Fundamental >= 0.90 (review not THIN) AND (IV_Rank > 50 OR Open_Interest < 2000)
    -> Clinical conviction is exceptional, but the options structure is
       either overpriced or untradeable. Route to the long-term equity
       track instead of burning premium on a bad options trade. Checked
@@ -73,7 +73,7 @@ it is Claude's reading of the evidence wherever one exists
 (candidate.evidence_basis "CLAUDE" / "CLAUDE_THIN"), and the registry
 point system otherwise. The thresholds below were written for the point
 system, whose scores cluster at 0.83; Claude's spread from 0.05 to 0.95,
-so rule 1 (>= 0.85) and rule 3 (<= 0.40) now fire where before they
+so rule 1 (>= 0.90) and rule 3 (<= 0.40) now fire where before they
 almost never could.
 
 EVIDENCE WITHOUT A CONFIRMED TRIAL (point system only): p_fundamental is then the base rate
@@ -146,7 +146,7 @@ def calculate_divergence_delta(p_fundamental: float, p_market: Optional[float]) 
 
 def _is_equity_accumulation_setup(candidate: Candidate) -> bool:
     """
-    IF P_Fundamental >= 0.85 AND (IV_Rank > 50 OR Open_Interest < 2000):
+    IF P_Fundamental >= 0.90 AND (IV_Rank > 50 OR Open_Interest < 2000):
         -> options are overpriced (rich IV) or structurally untradeable
            (thin OI), despite exceptional fundamental conviction.
 

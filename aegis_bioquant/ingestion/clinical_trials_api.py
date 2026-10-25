@@ -40,8 +40,9 @@ company name, not a drug name or NCT ID — SEC press releases name the
 drug/trial acronym in free text (e.g. "MAPLE-HCM" for CYTK's aficamten
 PDUFA), and that free-text lookup was done manually to find this module's
 test case. search_studies() below accepts a drug/trial-acronym term once
-you have one; automating "read the filing, extract the drug name" is not
-built here — flag if you want that wired up.
+you have one. Reading the drug name out of the filing was built later, in
+ingestion/fda_scraper.py (_extract_drug_candidates) and, for the evidence
+review, engines/clinical_nlp/llm_review.py (identify_drug).
 """
 
 from __future__ import annotations

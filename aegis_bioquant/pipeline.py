@@ -3,28 +3,20 @@ pipeline.py
 ------------
 System orchestrator (Main Engine).
 
-STATUS: PARTIAL, but now includes the Phase A auto-discovery loop
-(run_discovery_scan()) on top of the single-candidate wiring
-(run_candidate_pipeline()), and run_discovery_scan() now persists every
-catalyst and prediction through core/database.py, running each
-candidate under a per-ticker lockout (core/cache.py) and handing each
-result to Phase E alerting (telemetry/alerts.py — a package the manual
-never assigned a file for; Phase E is only described there in prose).
+WHAT IT DOES: run_discovery_scan() is the daily scan. It finds every
+catalyst, refreshes the evidence reviews and the daily option readings,
+scores every upcoming PDUFA date (and AdCom with a listed sponsor) in the
+next EVENT_MOVE_LOOKAHEAD_DAYS through run_candidate_pipeline(), stores
+each score through core/database.py under a per-ticker lockout
+(core/cache.py), alerts on in-window signals (telemetry/alerts.py) and
+tracks outcomes. Its own docstring gives the details.
 
-DISCOVERY LOOP SCOPE, stated plainly: fda_scraper.py's automatic
-drug-name -> NCT resolution (resolved_nct_id) only exists for PDUFA
-events, built off SEC filing text. AdCom calendar entries have no
-equivalent — an FDA AdCom meeting title doesn't reliably name a specific
-sponsor's drug the way an 8-K does, and no resolver was built for that
-case. So run_discovery_scan() auto-runs the full pipeline only on PDUFA
-candidates that both (a) fall inside their entry window right now and
-(b) resolved to an NCT at HIGH confidence (resolution_tier in
-STUDY_TRIAL_NAME/ACRONYM — see fda_scraper.py's CatalystEvent docstring
-for why MEDIUM/LOW tiers can resolve to the wrong specific trial).
-Everything else found by the scan — AdCom-in-window meetings, and PDUFA
-candidates that are in-window but didn't resolve confidently — is
-reported separately as "needs a human look", not silently dropped or
-guessed at.
+TRIALS: a candidate is scored on a clinical trial only when the trial was
+matched with high confidence (resolution_tier STUDY_TRIAL_NAME/ACRONYM)
+or confirmed by an administrator (CONFIRMED). Otherwise it is still
+scored, on the evidence review or the base rate, and an in-window one is
+listed as needing a person to confirm its trial. AdCom meetings whose page
+names no listed company are reported, not scored.
 """
 
 from __future__ import annotations

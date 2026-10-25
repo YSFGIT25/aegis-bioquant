@@ -27,4 +27,6 @@ tzdata==2025.2          # time-zone data for the market-hours check (needed on W
 #   openai     engines/clinical_nlp/classifier.py LLM narrative adjustment
 #   scispacy   engines/clinical_nlp/extractor.py
 #   scipy      engines/options_quant (current metrics use the stdlib only)
-#   numpy
+# numpy is not listed: the scanner never imports it (yfinance pulls in its
+# own copy). The study's analysis does; its pinned set is in
+# analysis/requirements.txt.

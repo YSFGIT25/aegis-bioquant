@@ -1,24 +1,24 @@
 """
 engines/clinical_nlp/classifier.py
 --------------------------------------
-Phase B, Engine 1: Clinical NLP & Probability Engine. Produces
-P_Fundamental, the fundamental probability of FDA approval.
+Phase B, Engine 1: the registry point system. Produces a probability of
+FDA approval from a trial's posted results.
 
-DESIGN DEPARTURE FROM THE MANUAL, AND WHY: the manual's spec is "pass
-structured data to an LLM via Pydantic JSON mode, force it to output a
-probability between 0 and 1." I'm not building it that way as the
-primary scoring method, and I want to be direct about why rather than
-just quietly doing something else.
+ROLE TODAY: since 2026-10-09 this is the FALLBACK evidence score. Where an
+evidence review exists (engines/clinical_nlp/llm_review.py), its score is
+the one the rules act on and this one is stored beside it as point_score,
+for comparison. For most drugs awaiting a decision the registry has no
+posted results yet, so this score is usually the base rate alone.
 
-An LLM reading a trial summary and outputting a probability is a
-plausibility estimate, not a calibrated one — it has no mechanism for
-knowing whether its own 0.75 resolves true 75% of the time historically.
-That's the single biggest credibility risk I flagged for this whole
-project before writing a line of engine code, and building Engine 1
-around exactly that failure mode is the first-year-fund mistake, not an
-elite one.
+WHY IT WAS BUILT THIS WAY: the manual's spec is "pass structured data to
+an LLM via Pydantic JSON mode, force it to output a probability between 0
+and 1." The first version deliberately did not, because a model's
+probability is a plausibility estimate with no track record: nothing
+shows that its 0.75 comes true 75% of the time. Whether the evidence
+review that later replaced it is calibrated is exactly what the
+pre-registered study measures (analysis/run_analysis.py).
 
-So P_Fundamental here is a TRANSPARENT, AUDITABLE, DETERMINISTIC score:
+So the score here is TRANSPARENT, AUDITABLE and DETERMINISTIC:
 a literature-sourced base rate (see constants.FUNDAMENTAL_BASE_RATE_PRIOR)
 adjusted by real structured signals already sitting in
 clinical_trials_api.StudyProtocol — no LLM call, no hallucination risk,
@@ -31,18 +31,13 @@ toxicity) are ALREADY structured fields — no scispacy NER needed to get
 them, which is why this module depends on clinical_trials_api.py
 directly and NOT on engines/clinical_nlp/extractor.py.
 
-WHAT'S HONESTLY MISSING, not hidden: this is a hand-built scoring
-function with weights I judged to be reasonable and conservative, not
-weights fit to historical outcomes (no free historical PDUFA-outcome
-dataset exists to fit against). It is a defensible starting point, not
-a validated model. The actual fix — the one I'd prioritize if this were
-going into real capital — is logging every prediction here against its
-real outcome over time and checking a calibration curve (does a 0.80
-score actually resolve true 80% of the time?), same as flagged at
-project kickoff. An optional, bounded LLM adjustment for narrative
-signal (eligibility criteria language, mechanism-of-action caveats) is
-included below but OFF by default and inert without an OpenAI key —
-see llm_narrative_adjustment()'s docstring.
+WHAT IS MISSING: the weights are set by judgement to be reasonable and
+conservative, not fitted to historical outcomes (no free historical
+PDUFA-outcome dataset exists to fit against). It is a starting point,
+not a validated model; the remedy is the one the project adopted —
+storing every score and checking it against the real outcomes.
+llm_narrative_adjustment() below is an unbuilt placeholder that returns
+nothing; see its docstring.
 """
 
 from __future__ import annotations
@@ -225,11 +220,10 @@ def llm_narrative_adjustment(protocol: StudyProtocol) -> Optional[ScoreAdjustmen
     SMALL, BOUNDED adjustment (not a replacement score) so it can only
     nudge the auditable core, never dominate it.
 
-    Deliberately not implemented against a live OpenAI call in this
-    pass: this environment has no OPENAI_API_KEY configured, and I'm
-    not wiring in and silently testing against a paid API without you
-    deciding to spend on it first. Returns None (no adjustment) until
-    that's built out — ask if you want this turned on.
+    Never built: the language-model reading of the evidence was built
+    instead as a separate, full evidence review
+    (engines/clinical_nlp/llm_review.py). Always returns None (no
+    adjustment), and score() only calls it when asked to.
     """
     return None
 
