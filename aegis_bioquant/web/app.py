@@ -58,7 +58,7 @@ import asyncio
 import hmac
 import pathlib
 import re
-from datetime import date, timedelta
+from datetime import date, timedelta, timezone
 from contextlib import asynccontextmanager
 from typing import Optional
 from urllib.parse import urlsplit
@@ -254,6 +254,30 @@ def _start_session(response: Response, token: str) -> None:
 @app.get("/healthz", response_class=PlainTextResponse)
 async def healthz() -> str:
     return "ok"
+
+
+def _iso(moment) -> Optional[str]:
+    if moment is None:
+        return None
+    return (moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)).isoformat()
+
+
+@app.get("/status.json")
+async def status_json() -> JSONResponse:
+    """Public and deliberately bare: when the scanner last ran and last
+    stored a score, and which rules are in force. Read by the daily
+    outside check (a scheduled job), so a stopped scanner is noticed even
+    if its own Telegram report never arrives. Nothing about customers."""
+    from aegis_bioquant.config import rules
+    from aegis_bioquant.core.database import get_last_prediction_time, get_last_scan_time
+
+    return JSONResponse({
+        "last_scan_utc": _iso(await get_last_scan_time()),
+        "last_score_utc": _iso(await get_last_prediction_time()),
+        "rules_version": rules.RULES_VERSION,
+        "rules_fingerprint": rules.fingerprint(),
+        "rules_logged": not rules.unlogged_change(),
+    }, headers={"Cache-Control": "no-store"})
 
 
 @app.get("/static/dashboard.js")

@@ -39,6 +39,10 @@ async def main():
         check("landing page loads with security headers", r.status_code == 200 and "Create account" in r.text
               and "frame-ancestors 'none'" in r.headers["content-security-policy"] and r.headers["x-content-type-options"] == "nosniff")
         check("health check", (await anon.get("/healthz")).text == "ok")
+        st = (await anon.get("/status.json")).json()
+        check("public status: rules stamp and scan times only",
+              set(st) == {"last_scan_utc", "last_score_utc", "rules_version", "rules_fingerprint", "rules_logged"}
+              and st["rules_version"] == 1 and st["rules_logged"] is True)
         r = await anon.get("/static/dashboard.js")
         check("dashboard script served as a file", r.status_code == 200 and "javascript" in r.headers["content-type"] and "REFRESH_MS" in r.text)
         for path in ("/dashboard", "/settings"):

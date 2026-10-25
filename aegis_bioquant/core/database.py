@@ -813,6 +813,13 @@ async def get_last_scan_time() -> Optional[datetime]:
         return await session.scalar(select(func.max(CatalystEventRecord.last_seen_at)))
 
 
+async def get_last_prediction_time() -> Optional[datetime]:
+    """When the newest stored score was made (its scan's start)."""
+    factory = get_session_factory()
+    async with factory() as session:
+        return await session.scalar(select(func.max(PredictionRecord.scanned_at)))
+
+
 async def get_phase3_watchlist(limit: int = 200) -> list[CatalystEventRecord]:
     """
     Phase 3 readouts the most recent watch-list scan returned, soonest
