@@ -252,6 +252,34 @@ async def main():
     scores = await store.get_scores()
     check("run: one score row per trial per run", sorted(s.ticker for s in scores) == ["GOOD", "GOOD", "GOOD", "LATER", "LATER"])
 
+    # Out of API credit: the first failure stops the run's reviews; failures count toward the cap.
+    await db.reset_db()
+    await db.upsert_catalyst_events([event(f"NCT0000010{i}", f"T{i}", TODAY + timedelta(days=10 + i)) for i in range(4)])
+    prices.update({f"T{i}": 10.0 for i in range(4)})
+    calls.clear()
+
+    async def broke(sec, llm, http, **kw):
+        calls.append(kw["ticker"])
+        raise LLMError("API returned HTTP 400: Your credit balance is too low to access the Anthropic API.")
+
+    R.review_trial = broke
+    rep = await scan.run(TODAY, now=NOW)
+    check("run: out of credit -> one attempt, then the run stops reviewing", calls == ["T0"] and rep.waiting_for_review == 4
+          and len(rep.errors) == 1)
+
+    async def flaky(sec, llm, http, **kw):
+        calls.append(kw["ticker"])
+        raise LLMError("reply was cut off")
+
+    R.review_trial = flaky
+    calls.clear()
+    await scan.run(TODAY, now=NOW, max_reviews=2)
+    check("run: failed attempts count toward the cap", calls == ["T0", "T1"])
+    R.review_trial = fake_review
+
+    await db.reset_db()
+    await db.upsert_catalyst_events([event("NCT00000001", "GOOD", TODAY + timedelta(days=20))])
+    await scan.run(TODAY, now=NOW)
     row = (await store.get_reviews())["NCT00000001"]
     check("due: a fresh review is not redone", scan.review_due(row, row.reviewed_at.replace(tzinfo=timezone.utc) + timedelta(days=1)) == "")
     check("due: a week-old review is checked for new filings",

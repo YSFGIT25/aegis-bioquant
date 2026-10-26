@@ -40,7 +40,7 @@ RULES_LOG: list[tuple[int, str, str]] = [
      "graded. Announcement time: midnight US Eastern on the filing date; the last score 24h before it is graded."),
 ]
 
-RECORDED_FINGERPRINT = "2cba28805c5f"
+RECORDED_FINGERPRINT = "288a5c9cfdef"
 
 _HERE = Path(__file__).resolve().parent
 

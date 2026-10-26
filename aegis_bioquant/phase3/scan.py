@@ -22,6 +22,7 @@ when it was first reviewed gets none.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
@@ -36,6 +37,8 @@ from aegis_bioquant.phase3 import review as R
 from aegis_bioquant.phase3 import rules, store
 
 COMPANY_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
+# API errors every later call would hit too: stop reviewing for the run.
+_FATAL = re.compile(r"credit balance|HTTP 401|HTTP 403", re.I)
 
 
 @dataclass
@@ -115,6 +118,7 @@ async def run(today: Optional[date] = None, *, max_reviews: int = k.P3_MAX_REVIE
         # scored again after the answer is known.
         report.outcomes = await O.check(sec, llm, ciks, today, now)
         finished = {nct for nct, row in (await O.get_outcomes()).items() if row.outcome}
+        attempts, halted = 0, False
         for event in events:
             if event.resolved_nct_id in finished:
                 report.finished += 1
@@ -135,7 +139,12 @@ async def run(today: Optional[date] = None, *, max_reviews: int = k.P3_MAX_REVIE
                 if cik and not await has_new_filings(sec, cik, row.drug, row.reviewed_at.date(), today):
                     await store.touch_review(event.resolved_nct_id, now)
                     due = ""
-            if due and report.reviewed < max_reviews:
+            # A failed attempt counts toward the cap too: on 2026-10-26 the
+            # API credit ran out after 5 reviews and every remaining trial
+            # was tried in turn. An error that will fail every call (no
+            # credit, a bad key) stops this run's reviews outright.
+            if due and attempts < max_reviews and not halted:
+                attempts += 1
                 try:
                     result = await R.review_trial(
                         sec, llm, http, ticker=event.ticker, company=event.company_name or event.ticker,
@@ -144,6 +153,7 @@ async def run(today: Optional[date] = None, *, max_reviews: int = k.P3_MAX_REVIE
                     )
                 except (LLMError, httpx.HTTPError) as exc:
                     report.errors.append(f"{event.ticker} {event.resolved_nct_id}: {exc if isinstance(exc, LLMError) else type(exc).__name__}")
+                    halted = isinstance(exc, LLMError) and bool(_FATAL.search(str(exc)))
                     result = None
                 if result is not None:
                     row = await store.save_review(event, result, now)
