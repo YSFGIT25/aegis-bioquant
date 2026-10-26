@@ -276,6 +276,18 @@ _LANDING = """{% extends "base" %}
   </ol>
 </div>
 
+<div class="band">
+  <h2>How forecasts are graded</h2>
+  <p class="lead">Every score is a forecast that can be proven wrong, and every result is kept, right or wrong.</p>
+  <ol class="steps">
+    <li><strong>A score is a probability</strong>An evidence score of 76 means a 76% chance the FDA approves the drug at this decision.</li>
+    <li><strong>Scores can't be changed afterwards</strong>Each weekday's scores are stored as they are made, and copies are posted publicly on OSF. The score that counts is the last one stored at least 24 hours before the company announces the decision.</li>
+    <li><strong>Outcomes are recorded automatically</strong>From the company's announcement filed with the SEC, checked against the FDA's own database of approvals.</li>
+    <li><strong>Accuracy is measured against a simple guess</strong>Each forecast gets a Brier score, the standard accuracy measure for probabilities, compared with guessing an 83% chance of approval every time. FDAOdds is only useful if it beats that guess.</li>
+    <li><strong>The rules were set in advance</strong>How decisions are scored and graded was registered publicly on <a href="https://osf.io/e6rcu" target="_blank" rel="noopener noreferrer">OSF</a> before the record began on October 12, 2026.</li>
+  </ol>
+</div>
+
 <div class="cta">
   <h2>See every upcoming FDA decision in one place</h2>
   <p>Create an account to open the dashboard and connect your alerts.</p>
