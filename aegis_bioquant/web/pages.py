@@ -196,6 +196,7 @@ _BASE = """<!doctype html>
     Questions, or spotted a mistake? <a href="mailto:contact@fdaodds.com">contact@fdaodds.com</a></p>
 </footer>
 {% block scripts %}{% endblock %}
+<script src="/static/v.js" defer></script>
 </body>
 </html>
 """
@@ -466,7 +467,7 @@ _REVIEW = """{% extends "base" %}
 {% block content %}
 <div class="pagehead"><h1>Review</h1>
   <span class="muted">Confirm which clinical trial each catalyst is about. Confirmed catalysts are scored at the next scan.</span></div>
-<p class="subnav"><strong>Trials</strong> · <a href="/review/outcomes">Outcomes</a></p>
+<p class="subnav"><strong>Trials</strong> · <a href="/review/outcomes">Outcomes</a> · <a href="/review/visitors">Visitors</a></p>
 {% if notice %}<div class="notice {{ notice.kind }}" role="status">{{ notice.text }}</div>{% endif %}
 {% if not items %}
   <div class="empty">Nothing in an entry window as of the last scan.</div>
@@ -536,7 +537,7 @@ _OUTCOMES = """{% extends "base" %}
 {% block content %}
 <div class="pagehead"><h1>Review</h1>
   <span class="muted">Record what the FDA decided. Only outcomes confirmed here count in the track record.</span></div>
-<p class="subnav"><a href="/review">Trials</a> · <strong>Outcomes</strong></p>
+<p class="subnav"><a href="/review">Trials</a> · <strong>Outcomes</strong> · <a href="/review/visitors">Visitors</a></p>
 {% if notice %}<div class="notice {{ notice.kind }}" role="status">{{ notice.text }}</div>{% endif %}
 
 <h2>Waiting for an outcome</h2>
@@ -603,6 +604,58 @@ _OUTCOMES = """{% extends "base" %}
 {% endblock %}
 """
 
+_VISITORS = """{% extends "base" %}
+{% block title %}Visitors · FDAOdds{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>Review</h1>
+  <span class="muted">Visitors to this site, counted by the site itself: no cookies, no outside tracker. Bots and
+  administrators are not counted.</span></div>
+<p class="subnav"><a href="/review">Trials</a> · <a href="/review/outcomes">Outcomes</a> · <strong>Visitors</strong></p>
+
+{% if not stats.counting_since %}
+  <div class="empty">No visits counted yet. Counting starts with the first page view after this version went live.</div>
+{% else %}
+<p class="muted">Last {{ stats.period }} days, counting since {{ stats.counting_since }}. A visitor is counted once per
+  day: the same person on two days counts twice, because visitors can't be recognised from one day to the next.</p>
+<div class="scroll"><table>
+  <tr><th>Visitors (daily, added up)</th><th>Page views</th><th>New accounts</th></tr>
+  <tr><td>{{ stats.visitors }}</td><td>{{ stats.views }}</td><td>{{ stats.signups }}</td></tr>
+</table></div>
+
+<h2 style="margin-top:28px">Where visitors came from</h2>
+{% if not stats.came_from %}<div class="empty">Nothing yet.</div>{% else %}
+<div class="scroll"><table>
+  <tr><th>From</th><th>Visitors</th></tr>
+  {% for name, n in stats.came_from %}<tr><td>{{ "Typed the address or a bookmark" if name == "direct" else name }}</td><td>{{ n }}</td></tr>{% endfor %}
+</table></div>
+<p class="field-hint">"t.co" is X (Twitter). Links with ?utm_source=... are listed below.</p>
+{% endif %}
+
+{% if stats.sources %}
+<h2 style="margin-top:28px">Tagged links (utm_source)</h2>
+<div class="scroll"><table>
+  <tr><th>Source</th><th>Visitors</th></tr>
+  {% for name, n in stats.sources %}<tr><td>{{ name }}</td><td>{{ n }}</td></tr>{% endfor %}
+</table></div>
+{% endif %}
+
+<h2 style="margin-top:28px">Pages</h2>
+<div class="scroll"><table>
+  <tr><th>Page</th><th>Visitors</th></tr>
+  {% for name, n in stats.pages %}<tr><td>{{ name }}</td><td>{{ n }}</td></tr>{% endfor %}
+</table></div>
+
+<h2 style="margin-top:28px">By day</h2>
+<div class="scroll"><table>
+  <tr><th>Day (UTC)</th><th>Visitors</th><th>Page views</th><th>New accounts</th></tr>
+  {% for d in stats.days %}{% if d.views or d.signups %}
+  <tr><td>{{ d.day }}</td><td>{{ d.visitors }}</td><td>{{ d.views }}</td><td>{{ d.signups }}</td></tr>
+  {% endif %}{% endfor %}
+</table></div>
+{% endif %}
+{% endblock %}
+"""
+
 _env = Environment(
     loader=DictLoader(
         {
@@ -614,6 +667,7 @@ _env = Environment(
             "message": _MESSAGE,
             "review": _REVIEW,
             "outcomes": _OUTCOMES,
+            "visitors": _VISITORS,
             "dashboard": _DASHBOARD,
             "settings": _SETTINGS,
         }

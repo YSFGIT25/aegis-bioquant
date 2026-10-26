@@ -21,6 +21,8 @@ PAGES:
     /settings         connect / remove Telegram and Discord, login required
     /review           administrators only: confirm which trial a catalyst is about
     /review/outcomes  administrators only: record what the FDA decided
+    /review/visitors  administrators only: the site's own visitor count (web/visits.py)
+    POST /v           where each page reports a view (/static/v.js)
     /telegram/webhook where Telegram delivers "/start <code>" messages
     /healthz          for the host's health check
 
@@ -97,6 +99,7 @@ from aegis_bioquant.ingestion.company_tickers import normalize_company_name
 from aegis_bioquant.telemetry.dashboard import DASHBOARD_SCRIPT, build_state
 from aegis_bioquant.web import sessions
 from aegis_bioquant.web import pages
+from aegis_bioquant.web import visits
 from aegis_bioquant.web.pages import render
 
 SESSION_COOKIE = "aegis_session"
@@ -171,7 +174,7 @@ async def _security(request: Request, call_next):
     )
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "same-origin"
-    if request.url.path != "/static/dashboard.js":
+    if request.url.path not in ("/static/dashboard.js", "/static/v.js"):
         response.headers["Cache-Control"] = "no-store"
     return response
 
@@ -296,6 +299,37 @@ _LOGO_PNG = pathlib.Path(__file__).with_name("logo.png").read_bytes()
 @app.get("/logo.png")
 async def logo_png() -> Response:
     return Response(_LOGO_PNG, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/static/v.js")
+async def visit_js() -> Response:
+    return Response(visits.SCRIPT, media_type="text/javascript", headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.post("/v")
+async def visit(request: Request) -> Response:
+    """The page-view report /static/v.js sends (web/visits.py). Always
+    answers 204: nothing about the outcome is worth telling the caller."""
+    try:
+        session = await _session(request)
+        await visits.record(
+            await request.body(), ip=request.client.host if request.client else "",
+            user_agent=request.headers.get("user-agent", ""), own_host=request.headers.get("host", ""),
+            member=session is not None, admin=_is_admin(session),
+        )
+    except Exception:  # noqa: BLE001 — a lost page view must never break a page or show an error
+        pass
+    return Response(status_code=204)
+
+
+@app.get("/review/visitors")
+async def visitors_page(request: Request):
+    session = await _session(request)
+    if session is None:
+        return _redirect("/login")
+    if not _is_admin(session):
+        return _not_found()
+    return HTMLResponse(render("visitors", session=session, here="review", stats=await visits.summary(date.today())))
 
 
 @app.get("/", response_class=HTMLResponse)
