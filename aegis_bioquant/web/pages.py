@@ -139,6 +139,8 @@ _SITE_STYLE = """
   .cta .actions { justify-content: center; }
 
   footer { max-width: 1240px; margin: 0 auto; padding: 26px 20px 44px; color: var(--dim); font-size: 12px; border-top: 1px solid var(--line); }
+  footer .support { margin: 12px 0 0; color: var(--muted); }
+  footer .support a { color: var(--brand-2); }
   @media (max-width: 900px) { .hero { grid-template-columns: 1fr; padding: 36px 0 44px; gap: 32px; } .band { padding: 40px 0; } }
 """
 
@@ -185,6 +187,9 @@ _BASE = """<!doctype html>
   FDAOdds publishes automated, model-generated signals for information only. It is not investment
   advice, and nothing here is a recommendation to buy or sell any security. Trading options and biotech
   stocks around regulatory events can lose your entire position. FDAOdds is independent and is not affiliated with, or endorsed by, the U.S. Food and Drug Administration.
+  <p class="support">FDAOdds is free and run by one student.
+    <a href="https://www.buymeacoffee.com/fdaodds" target="_blank" rel="noopener noreferrer">Support it on Buy Me a Coffee</a>
+    to help cover the AI model and hosting costs.</p>
 </footer>
 {% block scripts %}{% endblock %}
 </body>
