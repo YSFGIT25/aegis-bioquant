@@ -188,9 +188,10 @@ _BASE = """<!doctype html>
   FDAOdds publishes automated, model-generated signals for information only. It is not investment
   advice, and nothing here is a recommendation to buy or sell any security. Trading options and biotech
   stocks around regulatory events can lose your entire position. FDAOdds is independent and is not affiliated with, or endorsed by, the U.S. Food and Drug Administration.
-  <p class="support">FDAOdds is free and run by one student.
-    <a href="https://www.buymeacoffee.com/fdaodds" target="_blank" rel="noopener noreferrer">Support it on Buy Me a Coffee</a>
-    to help cover the AI model and hosting costs.
+  <p class="support">FDAOdds scores every upcoming FDA decision for small and mid-sized biotechs each weekday, shows
+    the evidence and sources behind each score, and keeps a public record of how every forecast turns out, free for everyone.
+    <a href="https://www.buymeacoffee.com/fdaodds" target="_blank" rel="noopener noreferrer">Support FDAOdds on Buy Me a Coffee</a>
+    to keep it that way.
     Questions, or spotted a mistake? <a href="mailto:contact@fdaodds.com">contact@fdaodds.com</a></p>
 </footer>
 {% block scripts %}{% endblock %}
