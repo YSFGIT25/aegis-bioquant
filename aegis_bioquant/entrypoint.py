@@ -133,8 +133,9 @@ def run_scan_with_retry() -> None:
 
 
 def after_scan(ok: bool, retried: bool, lines: list[str], now: Optional[datetime] = None) -> None:
-    """Automatic outcome confirmation (core/auto_confirm.py), the weekly
-    OSF snapshot (core/snapshots.py) and the operator's status message
+    """Automatic outcome confirmation (core/auto_confirm.py), the Phase 3
+    forecasts when switched on (phase3/), the weekly OSF snapshot
+    (core/snapshots.py) and the operator's status message
     (telemetry/status.py), in that order, so the snapshot and the message
     include the outcomes just recorded. None of them may stop the
     scheduler, so every failure here is logged and swallowed."""
@@ -159,6 +160,20 @@ def after_scan(ok: bool, retried: bool, lines: list[str], now: Optional[datetime
                  + (f"; {outcomes.error}" if outcomes.error else ""))
         except Exception as exc:  # noqa: BLE001 — see docstring
             _log(f"automatic outcome check failed: {type(exc).__name__}")
+    if ok and settings.PHASE3_FORECASTS:
+        from aegis_bioquant.core.database import dispose_db
+        from aegis_bioquant.phase3 import scan as phase3
+
+        async def forecast():
+            try:
+                return await phase3.run(now.date(), now=now)
+            finally:
+                await dispose_db()
+
+        try:
+            _log(asyncio.run(forecast()).line())
+        except Exception as exc:  # noqa: BLE001 — see docstring
+            _log(f"phase 3 forecasts failed: {type(exc).__name__}")
     snapshot_note: Optional[str] = None
     if ok and settings.OSF_TOKEN and now.weekday() == settings.SNAPSHOT_WEEKDAY:
         from aegis_bioquant.core.snapshots import SnapshotError, upload_snapshot

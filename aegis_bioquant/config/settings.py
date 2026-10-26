@@ -162,3 +162,8 @@ SNAPSHOT_WEEKDAY = int(os.environ.get("SNAPSHOT_WEEKDAY", "6"))   # 0 = Monday .
 # review back (tests use it; the study does not).
 OUTCOMES_AUTOMATIC = os.environ.get("OUTCOMES_AUTOMATIC", "1") != "0"
 OPENFDA_BASE_URL = os.environ.get("OPENFDA_BASE_URL", "https://api.fda.gov")
+
+# Used by entrypoint.after_scan: the Phase 3 trial forecasts (phase3/), a
+# separate track from the FDA-decision study. Off unless set to "1": each
+# run spends API credit on reviews (phase3/constants.py rations them).
+PHASE3_FORECASTS = os.environ.get("PHASE3_FORECASTS", "0") == "1"
