@@ -24,8 +24,12 @@ settings.PHASE3_FORECASTS is on):
      the company's filings, the registry and a web search.
   4. Stores one score per trial per day (store.py), stamped with the
      Phase 3 rules version and fingerprint (rules.py).
+  5. Before scoring, records each trial's result automatically from the
+     company's SEC filings, under a fixed rule (outcomes.py), and grades
+     the last score stored 24 hours before it (outcomes.graded).
 
-NOT YET BUILT (later steps): recording outcomes, the trade filter and
-alerts, the dashboard tab. Until the Phase 3 rules are registered on OSF,
-RULES_VERSION is 0 and every score is a trial run.
+NOT YET BUILT (later steps): the trade filter and alerts, the dashboard
+tab, the Phase 3 tables in the weekly OSF snapshot. Until the Phase 3
+rules are registered on OSF, RULES_VERSION is 0 and every score is a
+trial run.
 """

@@ -24,6 +24,10 @@ P3_MAX_WEB_SEARCHES = 6           # searches per review (the team and expert vie
 P3_REVIEW_MAX_TOKENS = 16000      # room for the model's reasoning plus the answer
 P3_REVIEW_EFFORT = "medium"       # the model's default; the FDA-decision reviews run at it too
 
+# Recording results (phase3/outcomes.py).
+P3_OUTCOME_GIVE_UP_DAYS = 365     # stop looking for a result this long after the estimated completion
+P3_OUTCOME_MAX_READS_PER_SCAN = 20  # filings the model reads per scan; the rest wait for the next day
+
 # Estimated price of a review, for the cost line in each scan's report.
 # Claude Opus 5.5 list prices; web search is billed per search.
 P3_PRICE_INPUT_PER_MTOK = 4.00

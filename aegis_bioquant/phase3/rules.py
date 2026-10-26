@@ -34,10 +34,13 @@ RULES_LOG: list[tuple[int, str, str]] = [
      "Trial run, not registered. Every Phase 3 trial of a listed company with an estimated primary completion "
      "date from 180 days ago to 90 days ahead, share price $2+, is reviewed by an AI model (filings, the trial "
      "registry and a web search: the science, who is behind the trial, independent expert views, warning signs), "
-     "starting from a 58% base rate. One score per trial per day."),
+     "starting from a 58% base rate. One score per trial per day. Results recorded automatically from the "
+     "company's 8-K/6-K filings: MET only if every primary endpoint was met with statistical significance (or the "
+     "trial was stopped early for efficacy); anything else NOT_MET; ended for non-efficacy reasons STOPPED, not "
+     "graded. Announcement time: midnight US Eastern on the filing date; the last score 24h before it is graded."),
 ]
 
-RECORDED_FINGERPRINT = "4d531bf1326f"
+RECORDED_FINGERPRINT = "2cba28805c5f"
 
 _HERE = Path(__file__).resolve().parent
 

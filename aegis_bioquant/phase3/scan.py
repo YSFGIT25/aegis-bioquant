@@ -14,8 +14,10 @@ since, or when the review is P3_REVIEW_MAX_AGE_DAYS old. At most
 P3_MAX_REVIEWS_PER_SCAN reviews run per scan, soonest trials first, so a
 first run over many trials is spread over several days.
 
-Every trial that passes the price screen and has a review gets one score
-row for the day. A trial whose results are already public gets none.
+Each run first looks for results (outcomes.py). Then every trial that
+passes the price screen, has a review and has no recorded result gets
+one score row for the day. A trial whose results were already public
+when it was first reviewed gets none.
 """
 
 from __future__ import annotations
@@ -29,6 +31,7 @@ import httpx
 from aegis_bioquant.engines.clinical_nlp.llm_review import LLMError, has_new_filings
 from aegis_bioquant.ingestion.market_data_feed import fetch_quote
 from aegis_bioquant.phase3 import constants as k
+from aegis_bioquant.phase3 import outcomes as O
 from aegis_bioquant.phase3 import review as R
 from aegis_bioquant.phase3 import rules, store
 
@@ -44,7 +47,9 @@ class Phase3Report:
     under_price: int = 0
     no_price: int = 0
     waiting_for_review: int = 0
+    finished: int = 0
     cost_usd: float = 0.0
+    outcomes: Optional[O.OutcomeReport] = None
     errors: list[str] = field(default_factory=list)
 
     def line(self) -> str:
@@ -53,6 +58,12 @@ class Phase3Report:
                 f"{self.under_price} under ${k.P3_MIN_PRICE:.0f}, {self.waiting_for_review} waiting for a review")
         if self.no_price:
             text += f", {self.no_price} without a price"
+        if self.outcomes is not None:
+            o = self.outcomes
+            text += (f"; results: {o.checked} trials searched, {o.read} filings read (~${o.cost_usd:.2f}), "
+                     f"{len(o.recorded)} recorded" + (" (" + "; ".join(o.recorded) + ")" if o.recorded else "")
+                     + f", {self.finished} finished trials no longer scored")
+            self.errors = self.errors + [e for e in o.errors if e not in self.errors]
         if self.errors:
             text += f"; {len(self.errors)} error(s): " + "; ".join(self.errors[:3])
         return text
@@ -100,7 +111,14 @@ async def run(today: Optional[date] = None, *, max_reviews: int = k.P3_MAX_REVIE
             httpx.AsyncClient(timeout=httpx.Timeout(600.0, connect=20.0)) as llm, \
             httpx.AsyncClient(timeout=30.0) as http:
         ciks = await cik_by_ticker(sec)
+        # Results first, so a trial whose result came out today is not
+        # scored again after the answer is known.
+        report.outcomes = await O.check(sec, llm, ciks, today, now)
+        finished = {nct for nct, row in (await O.get_outcomes()).items() if row.outcome}
         for event in events:
+            if event.resolved_nct_id in finished:
+                report.finished += 1
+                continue
             try:
                 price = (await fetch_quote(event.ticker)).last_price
             except Exception:  # noqa: BLE001 — the quote source raises many kinds; a missing price only skips the day
