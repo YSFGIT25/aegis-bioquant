@@ -190,7 +190,8 @@ _BASE = """<!doctype html>
   stocks around regulatory events can lose your entire position. FDAOdds is independent and is not affiliated with, or endorsed by, the U.S. Food and Drug Administration.
   <p class="support">FDAOdds is free and run by one student.
     <a href="https://www.buymeacoffee.com/fdaodds" target="_blank" rel="noopener noreferrer">Support it on Buy Me a Coffee</a>
-    to help cover the AI model and hosting costs.</p>
+    to help cover the AI model and hosting costs.
+    Questions, or spotted a mistake? <a href="mailto:contact@fdaodds.com">contact@fdaodds.com</a></p>
 </footer>
 {% block scripts %}{% endblock %}
 </body>
