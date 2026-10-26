@@ -192,6 +192,7 @@ _BASE = """<!doctype html>
     the evidence and sources behind each score, and keeps a public record of how every forecast turns out, free for everyone.
     <a href="https://www.buymeacoffee.com/fdaodds" target="_blank" rel="noopener noreferrer">Support FDAOdds on Buy Me a Coffee</a>
     to keep it that way.
+    Results are posted on X: <a href="https://x.com/FDAOdds_com" target="_blank" rel="noopener noreferrer">@FDAOdds_com</a>.
     Questions, or spotted a mistake? <a href="mailto:contact@fdaodds.com">contact@fdaodds.com</a></p>
 </footer>
 {% block scripts %}{% endblock %}
