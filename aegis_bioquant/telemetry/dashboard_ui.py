@@ -665,12 +665,14 @@ function renderKpis(s) {
 
 function renderExperimental(s) {
   const t = s.track_record, n = t.scored;
-  const checked = n
-    ? "FDAOdds' forecasts have been checked against " + n + (n === 1 ? " real FDA decision" : " real FDA decisions") + " so far, far too few to know whether they work."
-    : "No FDAOdds forecast has been checked against a real FDA decision yet.";
+  // Under 20 checked forecasts, nothing can be concluded either way; past
+  // that, the Track record tab's numbers speak for themselves.
+  const record = !n ? "no forecast checked against a real decision yet."
+    : "checked against " + n + (n === 1 ? " real decision" : " real decisions") + " so far, "
+      + (n < 20 ? "far too early to call." : "see the Track record tab.");
   document.getElementById("experimental").replaceChildren(
-    el("b", null, "Experimental."),
-    el("span", null, checked + " Treat every score and signal as unproven, and see the Track record tab. Information only, not investment advice."));
+    el("b", null, "Every forecast here is made in public before the FDA decides, and can't be changed afterwards. Judge FDAOdds by its record:"),
+    el("span", null, record + " Not investment advice."));
 }
 
 function stat(k, v, s) {
