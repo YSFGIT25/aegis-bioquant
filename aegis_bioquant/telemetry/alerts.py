@@ -267,7 +267,8 @@ _HEADLINES = {
     c.SIGNAL_STRUCTURAL_COLLAPSE_AVOID: "AVOID",
 }
 _EVENT_NAMES = {"PDUFA": "FDA decision", "ADCOM": "FDA advisory committee meeting"}
-_FOOTER = "Information only, not financial advice."
+_FOOTER = ("Experimental: FDAOdds' forecasts are not yet proven; the track record is on the dashboard. "
+           "Information only, not financial advice.")
 _MIN_REASON_CHARS = 160   # an evidence summary is never shortened below this
 
 

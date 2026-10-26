@@ -194,6 +194,7 @@ PAGE_STYLE = """
            border-left: 3px solid var(--line-2); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
   .today.act { border-left-color: var(--long); }
   .today.watch { border-left-color: var(--equity); }
+  .today.experimental { border-left-color: var(--warn); }
   .today b { font-size: 15px; }
   .today span { color: var(--muted); font-size: 14px; }
   .evreview { grid-column: 1 / -1; }
@@ -301,6 +302,8 @@ DASHBOARD_SECTIONS = """
     <p class="foot">The other tabs: Alerts keeps every alert sent. Track record shows past FDA decisions and how the stock reacted. Trials finishing soon lists late-stage trials about to report. How to read this defines each term.</p>
   </div>
 
+  <div class="today experimental" id="experimental"></div>
+
   <div class="today" id="today"></div>
 
   <div class="kpis" id="kpis"></div>
@@ -334,7 +337,7 @@ DASHBOARD_SECTIONS = """
   </section>
 
   <section data-panel="record" hidden>
-    <p class="hint">Every FDA decision we have recorded, with how the stock reacted and what this system said beforehand. Scores are only shown if they were made before the decision.</p>
+    <p class="hint">Every FDA decision we have recorded, with how the stock reacted and what this system said beforehand. A score is only shown, and only counted, if it was made at least 24 hours before the decision became public. Until many more decisions are in, nothing here shows whether the forecasts work. The full, unedited record is public at <a href="https://osf.io/zfg9b" target="_blank" rel="noopener noreferrer">osf.io/zfg9b</a>.</p>
     <div id="trackrecord"></div>
   </section>
 
@@ -653,11 +656,21 @@ function renderKpis(s) {
     kpi("Active alerts", String(m.signals), m.signals ? "inside their entry window today" : "no company qualifies today"),
     kpi("Setting up", String(m.setting_up), m.setting_up ? "pass all 3 checks, window not open yet" : m.close + " more pass 2 of 3 checks"),
     kpi("Next decision", next ? next.ticker : "\\u2014", next ? niceDate(next.date) + " \\u00b7 " + countdown(next.days_until) : "none scheduled"),
-    kpi("Track record", t.decisions ? t.approved + " of " + t.decisions : "\\u2014", t.decisions ? "recorded FDA decisions were approvals" : "no decisions recorded yet"),
+    kpi("Track record", t.scored ? t.called + " of " + t.scored : "\\u2014", t.scored ? "forecasts leaned the right way; far too few to judge" : "no forecast checked yet"),
   );
   const market = document.getElementById("market");
   market.className = "pill" + (m.market_open ? " open" : "");
   market.textContent = m.market_open ? "US market open" : "US market closed";
+}
+
+function renderExperimental(s) {
+  const t = s.track_record, n = t.scored;
+  const checked = n
+    ? "FDAOdds' forecasts have been checked against " + n + (n === 1 ? " real FDA decision" : " real FDA decisions") + " so far, far too few to know whether they work."
+    : "No FDAOdds forecast has been checked against a real FDA decision yet.";
+  document.getElementById("experimental").replaceChildren(
+    el("b", null, "Experimental."),
+    el("span", null, checked + " Treat every score and signal as unproven, and see the Track record tab. Information only, not investment advice."));
 }
 
 function stat(k, v, s) {
@@ -717,12 +730,14 @@ function renderRecord(s) {
   const moves = t.rows.filter(r => has(r.price_change_pct));
   const fell = moves.filter(r => r.outcome === "APPROVED" && r.price_change_pct < 0).length;
   const approvedMoves = moves.filter(r => r.outcome === "APPROVED").length;
+  const flat = Math.round(t.base_rate * 100);
   kp.append(
-    kpi("Decisions recorded", String(t.decisions), "since tracking began"),
-    kpi("Approved", String(t.approved), Math.round(100 * t.approved / t.decisions) + "% of decisions"),
-    kpi("Rejected", String(t.rejected), "the FDA said no"),
+    kpi("Forecasts checked", String(t.scored), "scored at least 24 hours before the news"),
+    kpi("Leaned the right way", t.scored ? t.called + " of " + t.scored : "\\u2014", "50+ on an approval, under 50 on a rejection"),
+    kpi("Accuracy score", t.scored ? t.brier.toFixed(3) : "\\u2014",
+        t.scored ? "lower is better; always guessing " + flat + "% scores " + t.base_brier.toFixed(3) : "needs forecasts checked against outcomes"),
+    kpi("Decisions recorded", String(t.decisions), (t.decisions - t.scored) + " came before FDAOdds was scoring them"),
     kpi("Fell after approval", approvedMoves ? fell + " of " + approvedMoves : "\\u2014", "approved stocks that dropped anyway"),
-    kpi("Scored beforehand", String(t.scored), t.scored ? "average evidence score " + Math.round(t.average_score * 100) : "accuracy can't be judged yet"),
   );
   const rows = table(
     ["Company", "Decided", "Outcome", "Stock reaction", "Evidence score before", "Expected move before"],
@@ -755,7 +770,7 @@ function renderPhase3(s) {
 function render() {
   const s = view.state;
   if (!s) return;
-  renderToday(s); renderKpis(s); renderCatalysts(s); renderSignals(s); renderRecord(s); renderPhase3(s);
+  renderExperimental(s); renderToday(s); renderKpis(s); renderCatalysts(s); renderSignals(s); renderRecord(s); renderPhase3(s);
   document.getElementById("legend").replaceChildren(
     legendItem("pass", "passes"), legendItem("soft", "passes, but on limited information"),
     legendItem("fail", "does not pass"), legendItem("unknown", "no reading yet"));

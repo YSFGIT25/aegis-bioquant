@@ -588,10 +588,14 @@ def _track_record_state(record: list[dict]) -> dict:
     shown beside it."""
     approved = sum(1 for r in record if r["outcome"] == "APPROVED")
     scored = [r for r in record if r["p_fundamental"] is not None]
-    brier = (
-        sum((r["p_fundamental"] - (1.0 if r["outcome"] == "APPROVED" else 0.0)) ** 2 for r in scored) / len(scored)
-        if scored else None
-    )
+    hit = lambda r: 1.0 if r["outcome"] == "APPROVED" else 0.0
+    brier = sum((r["p_fundamental"] - hit(r)) ** 2 for r in scored) / len(scored) if scored else None
+    # The same score for a flat guess of the base rate on the same
+    # decisions: the comparison the study makes (H1).
+    base_brier = sum((constants.FUNDAMENTAL_BASE_RATE_PRIOR - hit(r)) ** 2 for r in scored) / len(scored) if scored else None
+    # "Called right" = leaned the way it went (50 or more on an approval,
+    # under 50 on a rejection). Crude, and said so on the page.
+    called = sum(1 for r in scored if (r["p_fundamental"] >= 0.5) == (r["outcome"] == "APPROVED"))
     return {
         "decisions": len(record),
         "approved": approved,
@@ -600,6 +604,9 @@ def _track_record_state(record: list[dict]) -> dict:
         "scored_approved": sum(1 for r in scored if r["outcome"] == "APPROVED"),
         "average_score": sum(r["p_fundamental"] for r in scored) / len(scored) if scored else None,
         "brier": brier,
+        "base_brier": base_brier,
+        "base_rate": constants.FUNDAMENTAL_BASE_RATE_PRIOR,
+        "called": called,
         "rows": [
             {
                 "ticker": r["ticker"],

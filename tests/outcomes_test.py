@@ -207,6 +207,8 @@ async def main():
     st = (await D.build_state())["track_record"]
     check("dashboard summary: counts, and accuracy only over the decisions that had a score",
           (st["decisions"], st["approved"], st["rejected"], st["scored"], st["scored_approved"]) == (2, 1, 1, 1, 1) and abs(st["brier"] - (0.88 - 1) ** 2) < 1e-9 and abs(st["average_score"] - 0.88) < 1e-9)
+    check("dashboard compares with a flat base-rate guess on the same decisions, and counts forecasts that leaned the right way",
+          abs(st["base_brier"] - (0.83 - 1) ** 2) < 1e-9 and st["called"] == 1 and st["base_rate"] == 0.83)
     check("dashboard rows carry the reaction and what was said before", st["rows"][0]["ticker"] == "REJ" and st["rows"][1]["price_change_pct"] == round(30 / 21 - 1, 4) and st["rows"][1]["event_move_priced"] == 0.31)
     await db.dispose_db()
 

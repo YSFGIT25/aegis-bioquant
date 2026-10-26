@@ -1040,7 +1040,10 @@ async def get_track_record() -> list[dict]:
 
     "Before the decision" is enforced on the timestamps, not assumed: a
     score or reading taken on or after the decision date is never used,
-    because by then the outcome was known.
+    because by then the outcome was known. Where the announcement time is
+    recorded, a score must also be at least 24 hours older than it, the
+    study's rule (analysis/run_analysis.py), so the page and the paper
+    count the same forecasts.
     """
     factory = get_session_factory()
     async with factory() as session:
@@ -1057,6 +1060,9 @@ async def get_track_record() -> list[dict]:
         record = []
         for o in outcomes:
             cutoff = datetime(o.decision_date.year, o.decision_date.month, o.decision_date.day, tzinfo=timezone.utc)
+            if o.announced_at is not None:
+                announced = o.announced_at if o.announced_at.tzinfo else o.announced_at.replace(tzinfo=timezone.utc)
+                cutoff = min(cutoff, announced - timedelta(hours=24))
             prediction = await session.scalar(
                 select(PredictionRecord)
                 .where(
