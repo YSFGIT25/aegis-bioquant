@@ -157,7 +157,7 @@ _BASE = """<!doctype html>
 <div class="topline">
   <nav class="nav">
     <a class="brand" href="/">{{ logo_svg|safe }}<span>FDA<em>Odds</em></span></a>
-    <a href="https://www.buymeacoffee.com/fdaodds" target="_blank" rel="noopener noreferrer">Support</a>
+    <a href="https://www.buymeacoffee.com/fdaodds" target="_blank" rel="noopener noreferrer">Support us</a>
     {% if session %}
       <a href="/dashboard"{% if here == "dashboard" %} class="here"{% endif %}>Dashboard</a>
       <a href="/settings"{% if here == "settings" %} class="here"{% endif %}>Alert settings</a>
