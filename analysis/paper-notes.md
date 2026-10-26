@@ -90,6 +90,13 @@ CBER-regulated products (REPL; RARE twice). The snapshot holds no drug
 names for these past decisions, so the drug-name rule could not help;
 in live use it might match the first three, never the CBER ones.
 
+**The registration's answers on existing data were wrong.** The OSF form
+(2026-10-23) said no scored decision had resolved and IONS was due
+2026-10-26; IONS had been approved 2026-10-20. Corrected by a formal OSF
+registration update (text: `analysis/osf-registration-update-2026-10-26.md`),
+which also brings the outcome method up to date. In the paper, report the
+primary H1 result with and without IONS, labelled as not pre-registered.
+
 **Plan edits around the registration** (from the Claude Code session
 logs, which timestamp every edit made to the plan doc). No edit between
 2026-10-19 04:02 UTC and 2026-10-23 17:45 UTC (revision 23 at both
