@@ -104,6 +104,10 @@ async def main():
           b"IONS" in csv_text and b"CONFIRMED" in csv_text and entry["rows"] == 1
           and entry["sha256_csv"] == hashlib.sha256(csv_text).hexdigest())
     check("snapshot: manifest carries the rules stamp", manifest["rules_version"] == 1 and len(manifest["rules_fingerprint"]) == 12)
+    check("snapshot: the Phase 3 tables are in it, with their own rules stamp",
+          all(f"{t}.csv.gz" in names for t in ("phase3_scores", "phase3_reviews", "phase3_review_history", "phase3_outcomes"))
+          and manifest["phase3_rules_version"] == 0 and len(manifest["phase3_rules_fingerprint"]) == 12
+          and manifest["phase3_rules_fingerprint"] != manifest["rules_fingerprint"])
 
     received.clear(); refuse.add("screened_candidates.csv.gz"); snapshots.RETRY_WAIT_SECONDS = 0
     snap = await snapshots.upload_snapshot(datetime(2026, 10, 25, 19, 2, tzinfo=timezone.utc))

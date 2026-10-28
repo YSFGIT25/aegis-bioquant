@@ -28,8 +28,10 @@ settings.PHASE3_FORECASTS is on):
      company's SEC filings, under a fixed rule (outcomes.py), and grades
      the last score stored 24 hours before it (outcomes.graded).
 
+Its tables also go into the weekly OSF snapshot (core/snapshots.py).
+
 NOT YET BUILT (later steps): the trade filter and alerts, the dashboard
-tab, the Phase 3 tables in the weekly OSF snapshot. Until the Phase 3
+tab. Until the Phase 3
 rules are registered on OSF, RULES_VERSION is 0 and every score is a
 trial run.
 """

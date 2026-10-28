@@ -12,12 +12,14 @@ analysis was already in an earlier snapshot.
 
 WHAT IS COPIED: the tables the study reads or reports on — predictions,
 outcomes, evidence reviews and their history, event-move and IV readings,
-screened-out candidates, catalysts and confirmed trials. Each becomes a
-gzipped CSV. Nothing about customers is copied: no users, sessions, alert
+screened-out candidates, catalysts and confirmed trials — and the Phase 3
+forecasts' own tables (phase3/: daily scores, reviews and their history,
+recorded results). Each becomes a gzipped CSV. Nothing about customers is copied: no users, sessions, alert
 destinations or deliveries.
 
 manifest.json lists every file with its row count and the SHA-256 of its
-uncompressed CSV, plus the rules version and fingerprint in force, so a
+uncompressed CSV, plus the rules version and fingerprint in force (the study's, and the
+Phase 3 forecasts' separately), so a
 copy can be checked against the hash after download.
 
 Uploads use OSF's files API (WaterButler) with a personal access token
@@ -49,6 +51,8 @@ from sqlalchemy import select
 
 from aegis_bioquant.config import rules, settings
 from aegis_bioquant.core import database as db
+from aegis_bioquant.phase3 import outcomes as _p3_outcomes, store as _p3_store  # noqa: F401  registers the Phase 3 tables
+from aegis_bioquant.phase3 import rules as phase3_rules
 
 TABLES = (
     "predictions",
@@ -60,6 +64,10 @@ TABLES = (
     "screened_candidates",
     "catalyst_events",
     "trial_overrides",
+    "phase3_scores",
+    "phase3_reviews",
+    "phase3_review_history",
+    "phase3_outcomes",
 )
 
 
@@ -150,6 +158,8 @@ async def upload_snapshot(now: Optional[datetime] = None) -> Snapshot:
         "created_at_utc": now.isoformat(),
         "rules_version": rules.RULES_VERSION,
         "rules_fingerprint": rules.fingerprint(),
+        "phase3_rules_version": phase3_rules.RULES_VERSION,
+        "phase3_rules_fingerprint": phase3_rules.fingerprint(),
         "note": "Weekly copy of the FDAOdds (formerly Aegis-BioQuant) study record. sha256_csv is the hash of "
                 "each file after gunzip. Customer tables are not included.",
         "files": snap.files,
