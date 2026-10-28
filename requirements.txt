@@ -15,6 +15,7 @@ asyncpg==0.31.0             # required by core/database.py when DATABASE_URL is 
 fastapi==0.142.2             # required by telemetry/dashboard.py (local alert dashboard)
 uvicorn==0.54.0
 yfinance==1.7.0
+pandas<4                # pulled in by yfinance; 4 drops inplace=, which yfinance 1.7.0 still uses
 argon2-cffi==25.1.0   # required by core/accounts.py (password hashing)
 jinja2==3.1.6           # required by web/pages.py (hosted site templates)
 python-multipart==0.0.32  # required by web/app.py (reading submitted forms)
