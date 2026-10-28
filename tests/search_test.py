@@ -23,6 +23,7 @@ def transport(script):
         statuses = script.get(offset, [])
         status = statuses.pop(0) if statuses else 200
         if status == "garbage": return httpx.Response(200, text="<html>not json</html>")
+        if status == "empty": return httpx.Response(200, json={"hits": {"total": {"value": 0}, "hits": []}})
         return httpx.Response(status, json=page(offset)) if status == 200 else httpx.Response(status)
     return httpx.MockTransport(handler), calls
 
@@ -50,6 +51,13 @@ async def main():
     check("a page that isn't valid data: same handling", n == 10 and err is None and "cut short after 10 filings" in problems[0])
     n, problems, calls, err = await search({0: [500, 500, 500]})
     check("nothing read at all: that is still a failed source, raised", n is None and err == "HTTPStatusError" and calls == [0, 0, 0])
+    n, problems, calls, err = await search({0: ["empty"]})
+    check("an empty first answer is asked once more, and the second answer is used", (n, problems, err) == (25, [], None) and calls[:2] == [0, 0])
+    n, problems, calls, err = await search({0: ["empty", "empty"]})
+    check("empty twice: reported as a problem, not taken as a quiet day",
+          n == 0 and err is None and calls == [0, 0] and problems == ["PDUFA: filing search returned no filings at all, twice"])
+    n, problems, calls, err = await search({20: ["empty"]})
+    check("an empty page after some filings is just the end, not asked again", n == 20 and problems == [] and calls == [0, 10, 20])
     n, problems, calls, err = await search({0: [404]})
     check("a non-transient error is not retried", err == "HTTPStatusError" and calls == [0])
 

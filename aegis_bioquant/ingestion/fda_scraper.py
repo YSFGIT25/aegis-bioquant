@@ -314,6 +314,9 @@ async def _get_with_retry(client: httpx.AsyncClient, url: str) -> httpx.Response
     return resp
 
 
+_EMPTY_SEARCH_WAIT_SECONDS = 30.0
+
+
 async def _search_pdufa_filings(
     client: httpx.AsyncClient, lookback_days: int, problems: Optional[list[str]] = None
 ) -> list[dict]:
@@ -340,6 +343,7 @@ async def _search_pdufa_filings(
 
     hits: list[dict] = []
     offset = 0
+    asked_again = False
 
     while len(hits) < c.EDGAR_MAX_FILINGS_PER_RUN:
         params = {
@@ -368,7 +372,19 @@ async def _search_pdufa_filings(
             break
 
         page_hits = payload.get("hits", {}).get("hits", [])
+        if not page_hits and not hits and not asked_again:
+            # Seen 2026-10-28 19:00Z: a valid answer with no filings at all,
+            # while the same search minutes later found 91 PDUFA dates. Over
+            # the lookback window a real empty result does not happen, so
+            # ask once more before believing it.
+            asked_again = True
+            await asyncio.sleep(_EMPTY_SEARCH_WAIT_SECONDS)
+            continue
         if not page_hits:
+            if not hits and problems is not None:
+                # Reported, not raised: the scan goes on, but the day is
+                # marked as missing its PDUFA dates rather than a quiet one.
+                problems.append("PDUFA: filing search returned no filings at all, twice")
             break
 
         hits.extend(page_hits)
